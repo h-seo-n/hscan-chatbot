@@ -1,0 +1,47 @@
+.chatContainer {
+  position: relative;
+  background-color: #f5f6f8;
+  border-radius: 16px;
+  padding: 16px 56px 16px 20px;
+}
+
+.chatInput {
+  width: 100%;
+  order: none;
+  outline: none;
+  background-color: transparent;
+  font-size: 15px;
+  font-family:
+    "Pretendard",
+    "Noto Sans KR",
+    -apple-system,
+    sans-serif;
+  color: #1a1d26;
+  resize: none;
+  line-height: 1.5;
+}
+
+.sendBtn {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #2563eb;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.sendBtn:hover {
+  background-color: #1d4ed8;
+}
+
+.sendBtn button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

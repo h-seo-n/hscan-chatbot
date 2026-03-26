@@ -1,0 +1,20 @@
+.loginButton {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background-color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1d26;
+  cursor: pointer;
+  font-family:
+    "Pretendard",
+    "Noto Sans KR",
+    -apple-system,
+    sans-serif;
+  transition: background-color 0.2s ease;
+}
+
+.loginButton:hover {
+  background-color: #f5f6f8;
+}

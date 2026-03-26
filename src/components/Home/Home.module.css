@@ -1,0 +1,43 @@
+.pageContainer {
+  min-height: 100vh;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+  font-family:
+    "Pretendard",
+    "Noto Sans KR",
+    -apple-system,
+    sans-serif;
+}
+
+.mainWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 24px 0;
+}
+
+.textSection {
+  margin-bottom: 32px;
+}
+
+.headerText {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1d26;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.actionSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chatFooter {
+  padding: 24px;
+  margin-top: auto;
+}

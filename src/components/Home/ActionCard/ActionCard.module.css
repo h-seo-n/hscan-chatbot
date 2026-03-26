@@ -1,0 +1,42 @@
+.actionContainer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 20px 24px;
+  background-color: #f5f6f8;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.15s ease;
+  text-align: left;
+}
+
+.actionContainer:hover {
+  background-color: #ebedf2;
+  transform: translateY(-1px);
+}
+
+.iconContainer {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.actionLabel {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a1d26;
+  font-family:
+    "Pretendard",
+    "Noto Sans KR",
+    -apple-system,
+    sans-serif;
+}
