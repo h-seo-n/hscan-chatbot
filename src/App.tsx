@@ -1,6 +1,9 @@
 import { useEffect, useRef } from "react";
 import { Orchestrator } from "./core/orchestrator";
 import HomePage from "./components/Home/page";
+import QuestionForm from "./components/a2ui/Scenario-1-Doc/QuestionForm";
+import ImageList from "./components/a2ui/Scenario-1-Doc/ImageList";
+import SelectedImages from "./components/a2ui/Scenario-1-Doc/SelectedImages"
 
 /**
  * 앱 루트 컴포넌트
@@ -39,9 +42,11 @@ function App() {
 
   return (
     <div>
-      <HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction}/>
+      {<HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction}/>}
+	    {/*<QuestionForm questions={[]} />
+      <ImageList/>
+      <SelectedImages/>*/}
     </div>
-  );
-}
+  );}
 
 export default App;

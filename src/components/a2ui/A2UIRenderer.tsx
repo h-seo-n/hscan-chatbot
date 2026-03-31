@@ -1,6 +1,6 @@
 import type { A2UIBlock } from "../../core/util/types";
 import HospitalSelector from "./examples/HospitalSelector";
-import VideoSelector from "./examples/VideoSelector";
+import VideoSelector from "./examples/VideoSelector"
 import PaymentForm from "./examples/PaymentForm";
 import InfoCard from "./examples/InfoCard";
 
@@ -52,7 +52,6 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
 
     case "info-card":
       return <InfoCard {...(block.props as Record<string, unknown>)} />;
-
 
     default:
       console.warn("[A2UIRenderer] 알 수 없는 A2UI 타입:", block.type);

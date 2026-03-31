@@ -1,0 +1,157 @@
+.container {
+  width: 100%;
+  max-width: 535px;
+  background: #ffffff;
+  border: 1px solid #d6d6d6;
+  border-radius: 15px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 20px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  width: 100%;
+}
+
+.card {
+  display: flex;
+  align-items: stretch;
+  gap: 18px;
+  width: 100%;
+  min-height: 107px;
+  padding: 17px 20px;
+  border: 1px solid #a5b9f0;
+  border-radius: 20px;
+  background: #e4eafd;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease;
+}
+
+.card:hover {
+  border-color: #7e9df0;
+}
+
+.cardSelected {
+  border: 2px solid #0059e4;
+  padding: 16px 19px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-top: 0px;
+  border: 1px solid #b7b7b7;
+  border-radius: 5px;
+  background: #ffffff;
+  box-sizing: border-box;
+  flex: 0 0 30px;
+}
+
+.checkboxChecked {
+  border-color: #0059e4;
+  background: #0059e4;
+}
+
+.checkmark {
+  width: 7px;
+  height: 14px;
+  border-right: 2.5px solid #ffffff;
+  border-bottom: 2.5px solid #ffffff;
+  transform: rotate(45deg) translate(-1px, -1px);
+  box-sizing: border-box;
+}
+
+.thumbnail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 15px;
+  background: #d9d9d9;
+  color: #000000;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 28px;
+  letter-spacing: -0.0494px;
+  overflow: hidden;
+  flex: 0 0 88px;
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnailLabel {
+  white-space: nowrap;
+}
+
+.details {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  text-align: left;
+  min-width: 0;
+  color: #000000;
+}
+
+.title,
+.hospital,
+.date {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: -0.0494px;
+}
+
+.submitButton {
+  width: 100%;
+  min-height: 58px;
+  border: 0;
+  border-radius: 15px;
+  background: #0059e6;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: -0.0494px;
+  padding: 15px 24px;
+  cursor: pointer;
+}
+
+.submitButton:hover {
+  background: #004ecc;
+}
+
+.submitButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.card:focus-visible,
+.submitButton:focus-visible {
+  outline: 3px solid rgba(0, 89, 230, 0.2);
+  outline-offset: 2px;
+}
+

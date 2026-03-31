@@ -1,0 +1,147 @@
+.formCard {
+  width: 100%;
+  max-width: 535px;
+  background: #ffffff;
+  border: 1px solid #d6d6d6;
+  border-radius: 15px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 20px;
+}
+
+.questionList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 282px;
+  padding: 7px 10px;
+  border-radius: 20px;
+  box-sizing: border-box;
+}
+
+.questionRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.questionRow:hover .checkbox {
+  border-color: #8f8d8d;
+}
+
+.checkbox {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border: 1px solid #bbb9b9;
+  border-radius: 5px;
+  background: #ffffff;
+  padding: 0;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.checkboxChecked {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-color: #0059e4;
+  background: #0059e4;
+}
+
+.checkmark {
+  width: 7px;
+  height: 14px;
+  border-right: 2.5px solid #ffffff;
+  border-bottom: 2.5px solid #ffffff;
+  transform: rotate(45deg) translateY(-1px);
+  box-sizing: border-box;
+}
+
+.questionContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.questionTitleButton {
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.questionTitleButton:focus-visible,
+.checkbox:focus-visible,
+.placeholderInput:focus-visible {
+  outline: 3px solid rgba(0, 89, 230, 0.18);
+  outline-offset: 2px;
+}
+
+.questionTitle {
+  color: #000000;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: -0.0494px;
+}
+
+.placeholderInput {
+  width: 100%;
+  padding: 10px;
+  background: #f2eded;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  color: #202020;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  letter-spacing: -0.0494px;
+  box-sizing: border-box;
+}
+
+.placeholderInput::placeholder {
+  color: #9d9d9d;
+}
+
+.placeholderInputDisabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.submitButton {
+  width: 100%;
+  min-height: 58px;
+  padding: 15px 24px;
+  border: 0;
+  border-radius: 15px;
+  background: #0059e6;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: -0.0494px;
+  cursor: pointer;
+}
+
+.submitButton:hover {
+  background: #004ecc;
+}
+
+.submitButton:focus-visible {
+  outline: 3px solid rgba(0, 89, 230, 0.25);
+  outline-offset: 2px;
+}
