@@ -1,6 +1,6 @@
 import type { A2UIBlock } from "../../core/util/types";
 import HospitalSelector from "./examples/HospitalSelector";
-import VideoSelector from "./examples/VideoSelector"
+import VideoSelector from "./examples/VideoSelector";
 import PaymentForm from "./examples/PaymentForm";
 import InfoCard from "./examples/InfoCard";
 

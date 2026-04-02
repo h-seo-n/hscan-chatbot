@@ -3,7 +3,9 @@ import { Orchestrator } from "./core/orchestrator";
 import HomePage from "./components/Home/page";
 import QuestionForm from "./components/a2ui/Scenario-1-Doc/QuestionForm";
 import ImageList from "./components/a2ui/Scenario-1-Doc/ImageList";
-import SelectedImages from "./components/a2ui/Scenario-1-Doc/SelectedImages"
+import SelectedImages from "./components/a2ui/Scenario-1-Doc/SelectedImages";
+import ConsentForm from "./components/a2ui/Scenario-1-Doc/ConsentForm";
+import Pincode from "./components/a2ui/Scenario-1-Doc/Pincode";
 
 /**
  * 앱 루트 컴포넌트
@@ -45,7 +47,9 @@ function App() {
       {<HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction}/>}
 	    {/*<QuestionForm questions={[]} />
       <ImageList/>
-      <SelectedImages/>*/}
+      <SelectedImages/>
+      <ConsentForm/>
+      <Pincode/>*/}
     </div>
   );}
 
