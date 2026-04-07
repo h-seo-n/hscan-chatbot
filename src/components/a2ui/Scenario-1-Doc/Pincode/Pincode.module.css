@@ -146,6 +146,21 @@
   box-sizing: border-box;
 }
 
+.timerBadgeButton {
+  border: 0;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.timerBadgeButton:hover {
+  background: #ffe4dd;
+}
+
+.timerBadgeButton:focus-visible {
+  outline: 3px solid rgba(235, 91, 65, 0.3);
+  outline-offset: 2px;
+}
+
 @media (max-width: 576px) {
   .card {
     padding: 18px 14px 16px;
@@ -180,6 +195,11 @@
     min-width: 0;
     max-width: 100%;
     padding: 10px 14px;
+  }
+
+  .timerBadgeButton {
+    min-width: 0;
+    max-width: 100%;
   }
 }
 
