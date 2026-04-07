@@ -18,12 +18,12 @@ const fallbackItems: ConsentFormItem[] = [
     id: "medical-use",
     label:
       "해당 영상은 의료 목적에만 사용되며, 개인정보는 관련 법에 따라 안전하게 보호됩니다.",
-    checked: true,
+    checked: false,
   },
   {
     id: "subtitle-share",
     label: "영상에 판독문이 있을 경우 함께 전송됩니다.",
-    checked: true,
+    checked: false,
   },
 ];
 
