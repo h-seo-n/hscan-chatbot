@@ -145,3 +145,50 @@
   outline: 3px solid rgba(0, 89, 230, 0.25);
   outline-offset: 2px;
 }
+
+@media (max-width: 576px) {
+  .content {
+    padding: 10px 16px;
+    gap: 12px;
+  }
+
+  .questionList {
+    padding: 7px 8px;
+  }
+
+  .questionRow {
+    gap: 14px;
+    padding: 10px 12px;
+  }
+
+  .checkbox {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+  }
+
+  .questionTitle {
+    font-size: clamp(18px, 4vw, 20px);
+    line-height: 1.4;
+  }
+
+  .placeholderInput {
+    font-size: clamp(18px, 4vw, 20px);
+  }
+
+  .submitButton {
+    padding: 14px 18px;
+    font-size: clamp(18px, 4vw, 20px);
+  }
+}
+
+@media (max-width: 420px) {
+  .questionRow {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .questionTitleButton {
+    width: 100%;
+  }
+}

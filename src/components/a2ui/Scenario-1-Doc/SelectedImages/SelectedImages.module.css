@@ -108,3 +108,50 @@
   outline-offset: 3px;
   border-radius: 6px;
 }
+
+@media (max-width: 576px) {
+  .card {
+    padding: 10px;
+  }
+
+  .cardContent {
+    gap: 12px;
+  }
+
+  .thumbnail {
+    width: 72px;
+    height: 72px;
+  }
+
+  .thumbnailLabel {
+    white-space: normal;
+  }
+
+  .title,
+  .hospital,
+  .date {
+    font-size: clamp(18px, 4vw, 20px);
+  }
+
+  .removeButton {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 420px) {
+  .cardContent {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .thumbnail {
+    width: 100%;
+    height: 132px;
+    border-radius: 16px;
+  }
+
+  .details {
+    width: 100%;
+  }
+}

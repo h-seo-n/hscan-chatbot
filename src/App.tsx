@@ -44,12 +44,12 @@ function App() {
 
   return (
     <div>
-      {<HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction}/>}
-	    {/*<QuestionForm questions={[]} />
+      {/*<HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction}/>*/}
+	    <QuestionForm questions={[]} />
       <ImageList/>
       <SelectedImages/>
       <ConsentForm/>
-      <Pincode/>*/}
+      <Pincode/>
     </div>
   );}
 

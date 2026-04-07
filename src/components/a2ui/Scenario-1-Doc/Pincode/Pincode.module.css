@@ -146,3 +146,54 @@
   text-align: center;
   box-sizing: border-box;
 }
+
+@media (max-width: 576px) {
+  .card {
+    padding: 18px 14px 16px;
+  }
+
+  .title,
+  .description,
+  .url,
+  .expiryNotice {
+    font-size: clamp(18px, 4vw, 24px);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .noticePanel {
+    padding: 16px 14px;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .codeWrapper {
+    gap: 4px;
+    padding: 6px;
+    border-width: 4px;
+  }
+
+  .digit {
+    font-size: clamp(20px, 5vw, 24px);
+  }
+
+  .timerBadge {
+    min-width: 0;
+    max-width: 100%;
+    padding: 10px 14px;
+  }
+}
+
+@media (max-width: 420px) {
+  .card {
+    padding: 16px 12px 14px;
+  }
+
+  .codeWrapper {
+    gap: 3px;
+  }
+
+  .digitBox {
+    border-radius: 14px;
+  }
+}

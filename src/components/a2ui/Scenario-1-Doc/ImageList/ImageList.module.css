@@ -155,3 +155,56 @@
   outline-offset: 2px;
 }
 
+@media (max-width: 576px) {
+  .content {
+    padding: 10px 16px;
+    gap: 12px;
+  }
+
+  .card {
+    gap: 14px;
+    padding: 14px 16px;
+    min-height: auto;
+  }
+
+  .thumbnail {
+    width: 72px;
+    height: 72px;
+    flex: 0 0 72px;
+  }
+
+  .thumbnailLabel {
+    white-space: normal;
+  }
+
+  .title,
+  .hospital,
+  .date {
+    font-size: clamp(18px, 4vw, 20px);
+    line-height: 1.4;
+  }
+
+  .submitButton {
+    padding: 14px 18px;
+    font-size: clamp(18px, 4vw, 20px);
+  }
+}
+
+@media (max-width: 420px) {
+  .card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .thumbnail {
+    width: 100%;
+    height: 132px;
+    border-radius: 16px;
+  }
+
+  .details {
+    width: 100%;
+  }
+}
+

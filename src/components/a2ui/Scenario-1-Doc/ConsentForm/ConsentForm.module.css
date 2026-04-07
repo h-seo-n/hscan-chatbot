@@ -117,3 +117,52 @@
   outline: 3px solid rgba(0, 89, 230, 0.18);
   outline-offset: 3px;
 }
+
+@media (max-width: 576px) {
+  .card {
+    padding: 16px 14px 15px;
+  }
+
+  .allConsentButton {
+    gap: 12px;
+    padding: 18px 16px;
+  }
+
+  .allConsentLabel {
+    font-size: clamp(20px, 5vw, 22px);
+  }
+
+  .itemList {
+    gap: 18px;
+    padding: 20px 8px 4px;
+  }
+
+  .itemRow {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .itemLabel {
+    font-size: clamp(18px, 4.5vw, 20px);
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .checkbox {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+  }
+
+  .checkboxLarge {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+  }
+}
+
+@media (max-width: 420px) {
+  .allConsentButton {
+    padding: 16px 14px;
+  }
+}
