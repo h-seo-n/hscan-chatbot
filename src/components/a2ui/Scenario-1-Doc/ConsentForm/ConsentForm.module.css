@@ -80,7 +80,7 @@
   margin-top: 0;
 }
 
-.checkboxChecked {
+.checkbox.checked {
   border-color: #0059e6;
   background: #0059e6;
 }
@@ -91,7 +91,7 @@
   opacity: 0;
 }
 
-.checkboxChecked .checkIcon {
+.checkbox.checked .checkIcon {
   opacity: 1;
 }
 

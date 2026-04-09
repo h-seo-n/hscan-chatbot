@@ -95,7 +95,7 @@ export default function ConsentForm({
       >
         <span
           aria-hidden="true"
-          className={`${styles.checkbox} ${styles.checkboxLarge} ${isAllChecked ? styles.checkboxChecked : ""}`}
+          className={`${styles.checkbox} ${styles.checkboxLarge} ${isAllChecked ? styles.checked : ""}`}
         >
           <CheckIcon />
         </span>
@@ -116,7 +116,7 @@ export default function ConsentForm({
             >
               <span
                 aria-hidden="true"
-                className={`${styles.checkbox} ${isChecked ? styles.checkboxChecked : ""}`}
+                className={`${styles.checkbox} ${isChecked ? styles.checked : ""}`}
               >
                 <CheckIcon />
               </span>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import styles from "./ImageList.module.css";
 
 export interface ImageListItem {
@@ -7,13 +7,11 @@ export interface ImageListItem {
   hospital: string;
   capturedAt: string;
   thumbnailUrl?: string;
-  thumbnailAlt?: string;
 }
 
 interface ImageListProps {
   images?: ImageListItem[];
   submitLabel?: string;
-  defaultSelectedIds?: string[];
   onSelect?: (imageIds: string[]) => void;
 }
 
@@ -35,7 +33,6 @@ const fallbackImages: ImageListItem[] = [
 export default function ImageList({
   images = [],
   submitLabel,
-  defaultSelectedIds,
   onSelect,
 }: ImageListProps) {
   const items = useMemo(
@@ -43,20 +40,7 @@ export default function ImageList({
     [images],
   );
 
-  const [selectedIds, setSelectedIds] = useState<string[]>(
-    defaultSelectedIds && defaultSelectedIds.length > 0
-      ? defaultSelectedIds.filter((id) => items.some((item) => item.id === id))
-      : [],
-  );
-
-  useEffect(() => {
-    const nextSelectedIds =
-      defaultSelectedIds && defaultSelectedIds.length > 0
-        ? defaultSelectedIds.filter((id) => items.some((item) => item.id === id))
-        : [];
-
-    setSelectedIds(nextSelectedIds);
-  }, [defaultSelectedIds, items]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const selectedCount = selectedIds.length;
   const buttonLabel = submitLabel ?? `${selectedCount}건 선택하기`;
@@ -87,22 +71,22 @@ export default function ImageList({
             return (
               <button
                 aria-pressed={isSelected}
-                className={`${styles.card} ${isSelected ? styles.cardSelected : ""}`}
+                className={`${styles.card} ${isSelected ? styles.selected : ""}`}
                 key={item.id}
                 onClick={() => handleSelect(item.id)}
                 type="button"
               >
                 <span
                   aria-hidden="true"
-                  className={`${styles.checkbox} ${isSelected ? styles.checkboxChecked : ""}`}
+                  className={`${styles.checkbox} ${isSelected ? styles.checked : ""}`}
                 >
-                  {isSelected ? <span className={styles.checkmark} /> : null}
+                  {isSelected && <span className={styles.checkmark} /> : null}
                 </span>
 
                 <span className={styles.thumbnail}>
                   {item.thumbnailUrl ? (
                     <img
-                      alt={item.thumbnailAlt ?? `${item.title} 썸네일`}
+                      alt={`${item.title} 썸네일`}
                       src={item.thumbnailUrl}
                     />
                   ) : (

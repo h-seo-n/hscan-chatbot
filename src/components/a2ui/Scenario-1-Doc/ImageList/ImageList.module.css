@@ -43,7 +43,7 @@
   border-color: #7e9df0;
 }
 
-.cardSelected {
+.card.selected {
   border: 2px solid #0059e4;
   padding: 16px 19px;
 }
@@ -62,7 +62,7 @@
   flex: 0 0 30px;
 }
 
-.checkboxChecked {
+.checkbox.checked {
   border-color: #0059e4;
   background: #0059e4;
 }
