@@ -108,7 +108,7 @@ const QuestionForm = ({
               <button
                 aria-label={`${item.question} 선택`}
                 aria-pressed={checkedItems[index]}
-                className={`${styles.checkbox} ${checkedItems[index] ? styles.checkboxChecked : ""}`}
+                className={`${styles.checkbox} ${checkedItems[index] ? styles.checked : ""}`}
                 onClick={() => handleToggle(index)}
                 type="button"
               >

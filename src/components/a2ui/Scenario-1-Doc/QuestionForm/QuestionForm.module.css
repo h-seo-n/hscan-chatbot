@@ -49,7 +49,7 @@
   box-sizing: border-box;
 }
 
-.checkboxChecked {
+.checkbox.checked {
   display: flex;
   align-items: center;
   justify-content: center;
