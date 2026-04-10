@@ -143,22 +143,6 @@
   font-weight: 700;
 }
 
-.title {
-  font-weight: 700;
-}
-
-.hospital {
-  font-weight: 700;
-}
-
-.meta {
-  color: #000000;
-}
-
-.date {
-  color: #000000;
-}
-
 .submitButton {
   width: 100%;
   min-height: 58px;

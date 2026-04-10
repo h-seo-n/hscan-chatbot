@@ -86,24 +86,9 @@
   font-size: 20px;
   line-height: 28px;
   letter-spacing: -0.0494px;
-}
-
-.title {
   font-weight: 700;
 }
 
-.hospital {
-  font-weight: 700;
-}
-
-.meta {
-  font-weight: 500;
-  color: #555555;
-}
-
-.date {
-  font-weight: 500;
-}
 
 .removeButton {
   display: inline-flex;
