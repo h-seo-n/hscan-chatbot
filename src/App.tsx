@@ -51,7 +51,10 @@ function App() {
 
   return (
     <div>
+      {/*original*/}
       {/*<HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction}/>*/}
+      
+      {/*for component render */}
 	    <QuestionForm questions={[]} />
       <ImageList/>
       <SelectedImages/>

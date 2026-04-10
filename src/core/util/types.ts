@@ -35,13 +35,17 @@ export interface ChatMessage {
   timestamp: number;
 }
 
-export interface Image {
+export interface Case {
   id: string;
   title: string;
   hospital: string;
   capturedAt: string;
+  bodyPart: string;
+  modality: string;
   thumbnailUrl?: string;
 }
+
+export type Image = Case;
 
 
 /** ------ MCP Client ------ */

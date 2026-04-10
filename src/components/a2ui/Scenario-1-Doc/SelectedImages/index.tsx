@@ -1,25 +1,30 @@
-import type { Image } from "../../../../core/util/types";
+import type { Case } from "../../../../core/util/types";
 import styles from "./SelectedImages.module.css";
 
-export type SelectedImageItem = Image;
+export type SelectedImageItem = Case;
 
 interface SelectedImagesProps {
-  images?: SelectedImageItem[];
+  cases?: SelectedImageItem[];
   onRemove?: (imageId: string) => void;
+  onNotFound?: () => void;
 }
 
-const fallbackImages: SelectedImageItem[] = [
+const fallbackCases: SelectedImageItem[] = [
   {
     id: "selected-image-1",
-    title: "영상 이름 1",
-    hospital: "촬영 병원 1",
+    title: "영상 이름",
+    hospital: "촬영 병원",
     capturedAt: "YYYY. MM. DD 촬영",
+    bodyPart: "촬영 부위",
+    modality: "Modality",
   },
   {
     id: "selected-image-2",
-    title: "영상 이름 2",
-    hospital: "촬영 병원 2",
+    title: "영상 이름",
+    hospital: "촬영 병원",
     capturedAt: "YYYY. MM. DD 촬영",
+    bodyPart: "촬영 부위",
+    modality: "Modality",
   },
 ];
 
@@ -47,10 +52,11 @@ const CloseIcon = () => (
 );
 
 export default function SelectedImages({
-  images = [],
+  cases = [],
   onRemove,
+  onNotFound,
 }: SelectedImagesProps) {
-  const items = images.length > 0 ? images : fallbackImages;
+  const items = cases.length > 0 ? cases : fallbackCases;
 
   return (
     <div className={styles.list}>
@@ -69,9 +75,17 @@ export default function SelectedImages({
             </div>
 
             <div className={styles.details}>
-              <p className={styles.title}>{item.title}</p>
-              <p className={styles.hospital}>{item.hospital}</p>
-              <p className={styles.date}>{item.capturedAt}</p>
+              <div className={styles.titleRow}>
+                <span className={styles.title}>{item.title}</span>
+                <span className={styles.separator}>|</span>
+                <span className={styles.hospital}>{item.hospital}</span>
+              </div>
+              <div className={styles.metaRow}>
+                <span className={styles.meta}>{item.bodyPart}</span>
+                <span className={styles.separator}>|</span>
+                <span className={styles.meta}>{item.modality}</span>
+              </div>
+              <span className={styles.date}>{item.capturedAt}</span>
             </div>
 
             <button
@@ -85,6 +99,11 @@ export default function SelectedImages({
           </div>
         </article>
       ))}
+      {onNotFound ? (
+        <button className={styles.notFoundButton} onClick={onNotFound} type="button">
+          찾는 영상이 없다
+        </button>
+      ) : null}
     </div>
   );
 }

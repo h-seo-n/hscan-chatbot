@@ -1,38 +1,44 @@
 import { useMemo, useState } from "react";
-import type { Image } from "../../../../core/util/types";
+import type { Case } from "../../../../core/util/types";
 import styles from "./ImageList.module.css";
 
-export type ImageListItem = Image;
+export type ImageListItem = Case;
 
 interface ImageListProps {
-  images?: ImageListItem[];
+  cases?: ImageListItem[];
   submitLabel?: string;
   onSelect?: (imageIds: string[]) => void;
+  onNotFound?: () => void;
 }
 
-const fallbackImages: ImageListItem[] = [
+const fallbackCases: ImageListItem[] = [
   {
     id: "video-1",
     title: "영상 이름",
     hospital: "촬영 병원",
     capturedAt: "YYYY. MM. DD 촬영",
+    bodyPart: "촬영 부위",
+    modality: "Modality",
   },
   {
     id: "video-2",
     title: "영상 이름",
     hospital: "촬영 병원",
     capturedAt: "YYYY. MM. DD 촬영",
+    bodyPart: "촬영 부위",
+    modality: "Modality",
   },
 ];
 
 export default function ImageList({
-  images = [],
+  cases = [],
   submitLabel,
   onSelect,
+  onNotFound,
 }: ImageListProps) {
   const items = useMemo(
-    () => (images.length > 0 ? images : fallbackImages),
-    [images],
+    () => (cases.length > 0 ? cases : fallbackCases),
+    [cases],
   );
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -90,8 +96,16 @@ export default function ImageList({
                 </span>
 
                 <span className={styles.details}>
-                  <span className={styles.title}>{item.title}</span>
-                  <span className={styles.hospital}>{item.hospital}</span>
+                  <span className={styles.titleRow}>
+                    <span className={styles.title}>{item.title}</span>
+                    <span className={styles.separator}>|</span>
+                    <span className={styles.hospital}>{item.hospital}</span>
+                  </span>
+                  <span className={styles.metaRow}>
+                    <span className={styles.meta}>{item.bodyPart}</span>
+                    <span className={styles.separator}>|</span>
+                    <span className={styles.meta}>{item.modality}</span>
+                  </span>
                   <span className={styles.date}>{item.capturedAt}</span>
                 </span>
               </button>
@@ -107,6 +121,15 @@ export default function ImageList({
         >
           {buttonLabel}
         </button>
+        {onNotFound ? (
+          <button
+            className={styles.emptyStateButton}
+            onClick={onNotFound}
+            type="button"
+          >
+            찾는 영상이 없다
+          </button>
+        ) : null}
       </div>
     </div>
   );

@@ -111,17 +111,52 @@
   align-items: flex-start;
   text-align: left;
   min-width: 0;
+  gap: 6px;
   color: #000000;
+}
+
+.titleRow,
+.metaRow {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.separator {
+  display: inline-block;
+  color: #6f6f6f;
+  font-size: 20px;
+  line-height: 28px;
+  margin: 0 6px;
 }
 
 .title,
 .hospital,
-.date {
+.date,
+.meta {
   margin: 0;
+  color: #000000;
   font-size: 20px;
-  font-weight: 700;
   line-height: 28px;
   letter-spacing: -0.0494px;
+  font-weight: 700;
+}
+
+.title {
+  font-weight: 700;
+}
+
+.hospital {
+  font-weight: 700;
+}
+
+.meta {
+  color: #000000;
+}
+
+.date {
+  color: #000000;
 }
 
 .submitButton {
@@ -146,6 +181,24 @@
 .submitButton:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.emptyStateButton {
+  align-self: center;
+  border: 0;
+  background: transparent;
+  color: #0059e6;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: -0.0494px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 6px 0 0;
+}
+
+.emptyStateButton:hover {
+  color: #004ecc;
 }
 
 .card:focus-visible,
@@ -187,6 +240,10 @@
     padding: 14px 18px;
     font-size: clamp(18px, 4vw, 20px);
   }
+
+  .emptyStateButton {
+    font-size: clamp(18px, 4vw, 20px);
+  }
 }
 
 @media (max-width: 420px) {
@@ -206,4 +263,3 @@
     width: 100%;
   }
 }
-

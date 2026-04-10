@@ -58,11 +58,29 @@
   flex-direction: column;
   justify-content: center;
   min-width: 0;
+  gap: 6px;
+}
+
+.titleRow,
+.metaRow {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.separator {
+  display: inline-block;
+  color: #6f6f6f;
+  font-size: 20px;
+  line-height: 28px;
+  margin: 0 6px;
 }
 
 .title,
 .hospital,
-.date {
+.date,
+.meta {
   margin: 0;
   color: #000000;
   font-size: 20px;
@@ -74,7 +92,15 @@
   font-weight: 700;
 }
 
-.hospital,
+.hospital {
+  font-weight: 700;
+}
+
+.meta {
+  font-weight: 500;
+  color: #555555;
+}
+
 .date {
   font-weight: 500;
 }
@@ -107,6 +133,26 @@
   outline: 3px solid rgba(0, 89, 230, 0.18);
   outline-offset: 3px;
   border-radius: 6px;
+}
+
+.notFoundButton {
+  width: 100%;
+  margin-top: 12px;
+  min-height: 58px;
+  padding: 15px 24px;
+  border: 0;
+  border-radius: 15px;
+  background: #f3f3f3;
+  color: #202020;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: -0.0494px;
+  cursor: pointer;
+}
+
+.notFoundButton:hover {
+  background: #e6e6e6;
 }
 
 @media (max-width: 576px) {
