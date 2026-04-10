@@ -1,13 +1,7 @@
+import type { Image } from "../../../../core/util/types";
 import styles from "./SelectedImages.module.css";
 
-export interface SelectedImageItem {
-  id: string;
-  title: string;
-  hospital: string;
-  capturedAt: string;
-  thumbnailUrl?: string;
-  thumbnailAlt?: string;
-}
+export type SelectedImageItem = Image;
 
 interface SelectedImagesProps {
   images?: SelectedImageItem[];
@@ -66,7 +60,7 @@ export default function SelectedImages({
             <div className={styles.thumbnail}>
               {item.thumbnailUrl ? (
                 <img
-                  alt={item.thumbnailAlt ?? `${item.title} 썸네일`}
+                  alt={`${item.title} 썸네일`}
                   src={item.thumbnailUrl}
                 />
               ) : (

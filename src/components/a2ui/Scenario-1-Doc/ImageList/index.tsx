@@ -1,13 +1,8 @@
 import { useMemo, useState } from "react";
+import type { Image } from "../../../../core/util/types";
 import styles from "./ImageList.module.css";
 
-export interface ImageListItem {
-  id: string;
-  title: string;
-  hospital: string;
-  capturedAt: string;
-  thumbnailUrl?: string;
-}
+export type ImageListItem = Image;
 
 interface ImageListProps {
   images?: ImageListItem[];
