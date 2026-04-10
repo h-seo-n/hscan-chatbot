@@ -80,7 +80,7 @@ export default function ImageList({
                   aria-hidden="true"
                   className={`${styles.checkbox} ${isSelected ? styles.checked : ""}`}
                 >
-                  {isSelected && <span className={styles.checkmark} /> : null}
+                  {isSelected && <span className={styles.checkmark} />}
                 </span>
 
                 <span className={styles.thumbnail}>
