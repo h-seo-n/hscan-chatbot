@@ -5,52 +5,40 @@ interface QuestionFormItem {
   question: string;
   hasInput: boolean;
   placeholder?: string;
-  checked?: boolean;
+}
+
+interface QuestionFormSubmitPayload {
+  selectedQuestions: Array<{
+    question: string;
+    hasInput: boolean;
+    placeholder?: string;
+    value: string;
+  }>;
 }
 
 interface QuestionFormProps {
   questions: QuestionFormItem[];
-  submitLabel?: string;
-  onSubmit?: () => void;
-  onSelectionChange?: (selectedQuestions: QuestionFormItem[]) => void;
-  onInputChange?: (values: string[]) => void;
+  onSubmit?: (payload: QuestionFormSubmitPayload) => void;
 }
 
 const fallbackQuestions: QuestionFormItem[] = [
   { question: "질문 1", hasInput: true, placeholder: "placeholder1" },
   { question: "질문 2", hasInput: true, placeholder: "placeholder2" },
-  { question: "질문 3", hasInput: false, checked: true },
+  { question: "질문 3", hasInput: false},
 ];
 
 const QuestionForm = ({
   questions,
-  submitLabel = "완료",
   onSubmit,
-  onSelectionChange,
-  onInputChange,
 }: QuestionFormProps) => {
   const items = questions.length > 0 ? questions : fallbackQuestions;
-  const [checkedItems, setCheckedItems] = useState<boolean[]>(
-    items.map((item) => Boolean(item.checked)),
-  );
-  const [inputValues, setInputValues] = useState<string[]>(
-    items.map(() => ""),
-  );
+  const [checkedItems, setCheckedItems] = useState<boolean[]>(items.map(() => false));
+  const [inputValues, setInputValues] = useState<string[]>(items.map(() => ""));
 
   useEffect(() => {
-    setCheckedItems(items.map((item) => Boolean(item.checked)));
+    setCheckedItems(items.map(() => false));
     setInputValues(items.map(() => ""));
   }, [questions]);
-
-  useEffect(() => {
-    onSelectionChange?.(
-      items.filter((_, index) => checkedItems[index]),
-    );
-  }, [checkedItems, items, onSelectionChange]);
-
-  useEffect(() => {
-    onInputChange?.(inputValues);
-  }, [inputValues, onInputChange]);
 
   const handleToggle = (index: number) => {
     setCheckedItems((current) => {
@@ -108,11 +96,11 @@ const QuestionForm = ({
               <button
                 aria-label={`${item.question} 선택`}
                 aria-pressed={checkedItems[index]}
-                className={`${styles.checkbox} ${checkedItems[index] ? styles.checked : ""}`}
+                className={`${styles.checkbox} ${checkedItems[index] && styles.checked}`}
                 onClick={() => handleToggle(index)}
                 type="button"
               >
-                {checkedItems[index] ? <span className={styles.checkmark} /> : null}
+                {checkedItems[index] && <span className={styles.checkmark} />}
               </button>
               <div className={styles.questionContent}>
                 <button
@@ -123,22 +111,40 @@ const QuestionForm = ({
                 >
                   <span className={styles.questionTitle}>{item.question}</span>
                 </button>
-                {item.hasInput ? (
+                {item.hasInput && (
                   <input
-                    className={`${styles.placeholderInput} ${!checkedItems[index] ? styles.placeholderInputDisabled : ""}`}
-                    disabled={!checkedItems[index]}
+                    className={`${styles.placeholderInput} ${!checkedItems[index] && styles.placeholderInputDisabled}`}
+                    readOnly={!checkedItems[index]}
+                    onFocus={() => {
+                      if (!checkedItems[index]) {
+                        handleToggle(index);
+                      }
+                    }}
                     onChange={(event) => handleInputChange(index, event.target.value)}
                     placeholder={item.placeholder}
                     type="text"
                     value={inputValues[index]}
                   />
-                ) : null}
+                )}
               </div>
             </div>
           ))}
         </div>
-        <button className={styles.submitButton} onClick={onSubmit} type="button">
-          {submitLabel}
+        <button
+          className={styles.submitButton}
+          type="button"
+          onClick={() =>
+            onSubmit?.({
+              selectedQuestions: items
+                .map((item, index) => ({
+                  ...item,
+                  value: inputValues[index],
+                }))
+                .filter((_, index) => checkedItems[index]),
+            })
+          }
+        >
+          완료
         </button>
       </div>
     </div>
