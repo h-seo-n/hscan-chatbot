@@ -1,8 +1,14 @@
 /** -------- LLM ------ */
-export interface LLMRequestMessage {
-  role: "user" | "assistant" | "system";
-  content: string;
-}
+export type LLMRequestMessage =
+  | {
+      role: "user" | "assistant" | "system";
+      content: string;
+    }
+  | {
+      role: "tool";
+      tool_call_id: string;
+      content: string;
+    };
 
 export interface LLMResponse {
   content: string;
@@ -23,7 +29,7 @@ export interface ToolResult {
   content: unknown;
 }
 
-export type MessageRole = "user" | "assistant" | "system";
+export type MessageRole = "user" | "assistant" | "system" | "tool";
 
 export interface ChatMessage {
   id: string;
@@ -34,19 +40,6 @@ export interface ChatMessage {
   a2ui?: A2UIBlock; // A2UI를 활용한 dynamic block : LLM 응답 파싱 후 클라이언트 단에서 첨부
   timestamp: number;
 }
-
-export interface Case {
-  id: string;
-  title: string;
-  hospital: string;
-  capturedAt: string;
-  bodyPart: string;
-  modality: string;
-  thumbnailUrl?: string;
-}
-
-export type Image = Case;
-
 
 /** ------ MCP Client ------ */
 
@@ -71,11 +64,20 @@ export interface McpCallToolResponse {
 /** ---------- A2UI 관련 types ---------- */
 export type A2UIType =
   // TODO : 무슨 UI block 종류 있는지 다 넣기
-  | "hospital-selector"
-  | "video-selector"
-  | "payment"
-  | "confirmation"
-  | "info-card";
+  // Scenario #1 - 제휴아닌병원 의사에게 영상 보여주기
+  | "show-doctor-video-consent-form"
+  | "image-selector"
+  | "pincode"
+  | "question-form"
+  | "selected-images-list"
+  // Scenario #2 - 이미 있는 영상 등록
+  | "address-contact-input"
+  | "medical-consent-form"
+  | "delivery-info-card"
+  | "cd-purchase-card"
+  // Scenario #7 - 영상 목록 조회, 다운로드
+  | "download-selector"  
+  ;
 
 export interface A2UIBlock {
   type: A2UIType;
