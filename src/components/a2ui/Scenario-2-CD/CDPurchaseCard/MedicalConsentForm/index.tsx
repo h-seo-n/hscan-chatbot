@@ -2,16 +2,33 @@ import { useState } from "react";
 import checkIcon from "../../../../../assets/check.svg";
 import styles from "./MedicalConsentForm.module.css";
 
+interface MedicalConsentFormProps {
+  checked?: boolean;
+  defaultChecked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
+}
+
 const DESCRIPTION =
   "의료영상은 제증명 자료에 해당하며, 결제 후 기술적 오류로 인한 발급 실패 이외의 경우에는 환불이 어려울 수 있습니다.";
 
 const CONFIRMATION_LABEL = "위 내용을 모두 확인했습니다";
 
-export default function MedicalConsentForm() {
-  const [isChecked, setIsChecked] = useState(false);
+export default function MedicalConsentForm({
+  checked,
+  defaultChecked = false,
+  onCheckedChange,
+}: MedicalConsentFormProps) {
+  const [internalChecked, setInternalChecked] = useState(defaultChecked);
+  const isChecked = checked ?? internalChecked;
 
   const handleToggle = () => {
-    setIsChecked((current) => !current);
+    const nextChecked = !isChecked;
+
+    if (checked === undefined) {
+      setInternalChecked(nextChecked);
+    }
+
+    onCheckedChange?.(nextChecked);
   };
 
   return (

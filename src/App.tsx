@@ -7,8 +7,7 @@ import SelectedImages from "./components/a2ui/Scenario-1-Doc/SelectedImages";
 import ConsentForm from "./components/a2ui/Scenario-1-Doc/ConsentForm";
 import Pincode from "./components/a2ui/Scenario-1-Doc/Pincode";
 import AddressContactInfo from "./components/a2ui/Scenario-2-CD/AddressContactInfo";
-import DeliverInfoCard from "./components/a2ui/Scenario-2-CD/CDPurchaseCard/DeliverInfoCard";
-import MedicalConsentForm from "./components/a2ui/Scenario-2-CD/CDPurchaseCard/MedicalConsentForm";
+import CDPurchaseCard from "./components/a2ui/Scenario-2-CD/CDPurchaseCard";
 
 /**
  * 앱 루트 컴포넌트
@@ -64,8 +63,7 @@ function App() {
       <ConsentForm/>
       <Pincode code={pincode} onRefreshCode={handleRefreshCode}/>
       <AddressContactInfo/>
-      <DeliverInfoCard/>
-      <MedicalConsentForm/>*/}
+      <CDPurchaseCard/>*/}
     </div>
   );}
 
