@@ -1,30 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "./ConsentForm.module.css";
 
-export interface ConsentFormItem {
-  id: string;
-  label: string;
-  checked?: boolean;
-}
-
 interface ConsentFormProps {
   title?: string;
-  items?: ConsentFormItem[];
+  items?: string[];
   onChange?: (selectedIds: string[], allChecked: boolean) => void;
 }
 
-const fallbackItems: ConsentFormItem[] = [
-  {
-    id: "medical-use",
-    label:
+const fallbackItems: string[] = [
       "해당 영상은 의료 목적에만 사용되며, 개인정보는 관련 법에 따라 안전하게 보호됩니다.",
-    checked: false,
-  },
-  {
-    id: "subtitle-share",
-    label: "영상에 판독문이 있을 경우 함께 전송됩니다.",
-    checked: false,
-  },
+      "영상에 판독문이 있을 경우 함께 전송됩니다.",
 ];
 
 const CheckIcon = () => (
@@ -50,40 +35,35 @@ export default function ConsentForm({
   items = fallbackItems,
   onChange,
 }: ConsentFormProps) {
-  const resolvedItems = useMemo(
+  // make sure no empty array passes through the prop
+  const resolvedItems: string[] = useMemo(
     () => (items.length > 0 ? items : fallbackItems),
     [items],
   );
 
-  const [selectedIds, setSelectedIds] = useState<string[]>(
-    resolvedItems.filter((item) => item.checked).map((item) => item.id),
-  );
-
-  useEffect(() => {
-    setSelectedIds(
-      resolvedItems.filter((item) => item.checked).map((item) => item.id),
-    );
-  }, [resolvedItems]);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   const isAllChecked =
     resolvedItems.length > 0 &&
-    resolvedItems.every((item) => selectedIds.includes(item.id));
+    resolvedItems.every((item) => selectedItems.includes(item));
 
   useEffect(() => {
-    onChange?.(selectedIds, isAllChecked);
-  }, [isAllChecked, onChange, selectedIds]);
-
+    onChange?.(selectedItems, isAllChecked);
+  }, [isAllChecked, onChange, selectedItems]);
+    
   const toggleAll = () => {
-    setSelectedIds(isAllChecked ? [] : resolvedItems.map((item) => item.id));
+    setSelectedItems(isAllChecked ? [] : resolvedItems);
   };
 
-  const toggleItem = (itemId: string) => {
-    setSelectedIds((current) =>
-      current.includes(itemId)
-        ? current.filter((id) => id !== itemId)
-        : [...current, itemId],
+  const toggleItem = (item: string) => {
+    setSelectedItems((prev) =>
+      prev.includes(item)
+        ? prev.filter((i) => i !== item) // remove
+        : [...prev, item], // add
     );
   };
+
+
 
   return (
     <section className={styles.card}>
@@ -104,14 +84,13 @@ export default function ConsentForm({
 
       <div className={styles.itemList}>
         {resolvedItems.map((item) => {
-          const isChecked = selectedIds.includes(item.id);
+          const isChecked = selectedItems.includes(item);
 
           return (
             <button
               aria-pressed={isChecked}
               className={styles.itemRow}
-              key={item.id}
-              onClick={() => toggleItem(item.id)}
+              onClick={() => toggleItem(item)}
               type="button"
             >
               <span
@@ -120,7 +99,7 @@ export default function ConsentForm({
               >
                 <CheckIcon />
               </span>
-              <span className={styles.itemLabel}>{item.label}</span>
+              <span className={styles.itemLabel}>{item}</span>
             </button>
           );
         })}
