@@ -53,7 +53,6 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
     case "info-card":
       return <InfoCard {...(block.props as Record<string, unknown>)} />;
 
-
     default:
       console.warn("[A2UIRenderer] 알 수 없는 A2UI 타입:", block.type);
       return (

@@ -1,6 +1,14 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Orchestrator } from "./core/orchestrator";
 import HomePage from "./components/Home/page";
+import QuestionForm from "./components/a2ui/Scenario-1-Doc/QuestionForm";
+import ImageList from "./components/a2ui/Scenario-1-Doc/ImageList";
+import SelectedImages from "./components/a2ui/Scenario-1-Doc/SelectedImages";
+import ConsentForm from "./components/a2ui/Scenario-1-Doc/ConsentForm";
+import Pincode from "./components/a2ui/Scenario-1-Doc/Pincode";
+import AddressContactInfo from "./components/a2ui/Scenario-2-CD/AddressContactInfo";
+import DeliverInfoCard from "./components/a2ui/Scenario-2-CD/CDPurchaseCard/DeliverInfoCard";
+
 
 /**
  * 앱 루트 컴포넌트
@@ -10,6 +18,7 @@ import HomePage from "./components/Home/page";
  */
 function App() {
   const orchestratorRef = useRef<Orchestrator | null>(null);
+//  const [pincode, setPincode] = useState("123456");
 
   useEffect(() => {
     // TODO: API 키를 안전하게 가져오기 (환경변수, 사용자 입력, 또는 백엔드 프록시)
@@ -37,11 +46,26 @@ function App() {
     console.log("[App] A2UI action:", action, payload);
   };
 
+  /*const handleRefreshCode = () => {
+    // 새로운 6자리 랜덤 코드 생성
+    const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+    setPincode(newCode);
+  };*/
+
   return (
     <div>
-      <HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction}/>
+      {/*original*/}
+      {<HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction}/>}
+      
+      {/*for component render 
+	    <QuestionForm questions={[]} />
+      <ImageList/>
+      <SelectedImages/>
+      <ConsentForm/>
+      {/*<Pincode code={pincode} onRefreshCode={handleRefreshCode}/>
+      <AddressContactInfo/>
+      <DeliverInfoCard/>*/}
     </div>
-  );
-}
+  );}
 
 export default App;

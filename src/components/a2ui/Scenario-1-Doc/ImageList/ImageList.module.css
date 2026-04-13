@@ -1,0 +1,249 @@
+.container {
+  width: 90%;
+  background: #ffffff;
+  border: 1px solid #d6d6d6;
+  border-radius: 15px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 20px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  width: 100%;
+}
+
+.card {
+  display: flex;
+  align-items: stretch;
+  gap: 18px;
+  width: 100%;
+  min-height: 107px;
+  padding: 17px 20px;
+  border: 1px solid #a5b9f0;
+  border-radius: 20px;
+  background: #e4eafd;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease;
+}
+
+.card:hover {
+  border-color: #7e9df0;
+}
+
+.card.selected {
+  border: 2px solid #0059e4;
+  padding: 16px 19px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-top: 0px;
+  border: 1px solid #b7b7b7;
+  border-radius: 5px;
+  background: #ffffff;
+  box-sizing: border-box;
+  flex: 0 0 30px;
+}
+
+.checkbox.checked {
+  border-color: #0059e4;
+  background: #0059e4;
+}
+
+.checkmark {
+  width: 7px;
+  height: 14px;
+  border-right: 2.5px solid #ffffff;
+  border-bottom: 2.5px solid #ffffff;
+  transform: rotate(45deg) translate(-1px, -1px);
+  box-sizing: border-box;
+}
+
+.thumbnail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 15px;
+  background: #d9d9d9;
+  color: #000000;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 28px;
+  letter-spacing: -0.0494px;
+  overflow: hidden;
+  flex: 0 0 88px;
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnailLabel {
+  white-space: nowrap;
+}
+
+.details {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  text-align: left;
+  min-width: 0;
+  gap: 6px;
+  color: #000000;
+}
+
+.titleRow,
+.metaRow {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.separator {
+  display: inline-block;
+  color: #6f6f6f;
+  font-size: 20px;
+  line-height: 28px;
+  margin: 0 6px;
+}
+
+.title,
+.hospital,
+.date,
+.meta {
+  margin: 0;
+  color: #000000;
+  font-size: 20px;
+  line-height: 28px;
+  letter-spacing: -0.0494px;
+  font-weight: 700;
+}
+
+.submitButton {
+  width: 100%;
+  min-height: 58px;
+  border: 0;
+  border-radius: 15px;
+  background: #0059e6;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: -0.0494px;
+  padding: 15px 24px;
+  cursor: pointer;
+}
+
+.submitButton:hover {
+  background: #004ecc;
+}
+
+.submitButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.emptyStateButton {
+  align-self: center;
+  border: 0;
+  background: transparent;
+  color: #0059e6;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: -0.0494px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 6px 0 0;
+}
+
+.emptyStateButton:hover {
+  color: #004ecc;
+}
+
+.card:focus-visible,
+.submitButton:focus-visible {
+  outline: 3px solid rgba(0, 89, 230, 0.2);
+  outline-offset: 2px;
+}
+
+@media (max-width: 576px) {
+  .content {
+    padding: 10px 16px;
+    gap: 12px;
+  }
+
+  .card {
+    gap: 14px;
+    padding: 14px 16px;
+    min-height: auto;
+  }
+
+  .thumbnail {
+    width: 72px;
+    height: 72px;
+    flex: 0 0 72px;
+  }
+
+  .thumbnailLabel {
+    white-space: normal;
+  }
+
+  .title,
+  .hospital,
+  .date {
+    font-size: clamp(18px, 4vw, 20px);
+    line-height: 1.4;
+  }
+
+  .submitButton {
+    padding: 14px 18px;
+    font-size: clamp(18px, 4vw, 20px);
+  }
+
+  .emptyStateButton {
+    font-size: clamp(18px, 4vw, 20px);
+  }
+}
+
+@media (max-width: 420px) {
+  .card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .thumbnail {
+    width: 100%;
+    height: 132px;
+    border-radius: 16px;
+  }
+
+  .details {
+    width: 100%;
+  }
+}
