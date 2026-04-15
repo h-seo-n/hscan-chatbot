@@ -9,6 +9,7 @@ import Pincode from "./components/a2ui/Scenario-1-Doc/Pincode";
 import AddressContactInfo from "./components/a2ui/Scenario-2-CD/AddressContactInfo";
 import CDPurchaseCard from "./components/a2ui/Scenario-2-CD/CDPurchaseCard";
 import HospitalList from "./components/a2ui/Scenario-3-Hosp/HospitalList";
+import PurchaseImaging from "./components/a2ui/Scenario-3-Hosp/PurchaseImaging";
 
 /**
  * 앱 루트 컴포넌트
@@ -65,7 +66,8 @@ function App() {
       <Pincode code={pincode} onRefreshCode={handleRefreshCode}/>
       <AddressContactInfo/>
       <CDPurchaseCard/>
-      <HospitalList/>*/}
+      <HospitalList/>
+      <PurchaseImaging/>*/}
     </div>
   );}
 

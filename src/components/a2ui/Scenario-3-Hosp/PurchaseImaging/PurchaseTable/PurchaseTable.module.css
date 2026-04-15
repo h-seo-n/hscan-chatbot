@@ -1,0 +1,114 @@
+.table {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #c1c1c1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #3c3c3c;
+  font-family:
+    "Inter",
+    "Noto Sans KR",
+    "Apple SD Gothic Neo",
+    sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 28px;
+  letter-spacing: -0.0494px;
+}
+
+.labelCell,
+.headerCell,
+.priceCell {
+  min-width: 0;
+  padding: 0px 15px;
+}
+
+.labelCell {
+  display: flex;
+  align-items: center;
+  min-height: 67px;
+  border-right: 1px solid #c1c1c1;
+  background: #f6f6f6;
+}
+
+.labelCell:first-child,
+.headerCell {
+  border-bottom: 1px solid #c1c1c1;
+}
+
+.headerCell {
+  display: flex;
+  align-items: center;
+  min-height: 67px;
+  background: #ffffff;
+}
+
+.priceCell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background: #ffffff;
+}
+
+.totalPrice {
+  display: block;
+  min-height: 28px;
+  color: #3c3c3c;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 28px;
+}
+
+.detailList {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+}
+
+.detailRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  gap: 16px;
+  padding: 10px;
+  overflow: hidden;
+  background: #f6f6f6;
+  color: #535353;
+  font-size: 17px;
+  line-height: 28px;
+  white-space: nowrap;
+}
+
+.detailRow dt,
+.detailRow dd {
+  margin: 0;
+  min-width: 0;
+}
+
+.detailRow dd {
+  text-align: right;
+}
+
+@media (max-width: 420px) {
+  .table {
+    font-size: 18px;
+  }
+
+  .labelCell,
+  .headerCell,
+  .priceCell {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .detailRow {
+    gap: 10px;
+    font-size: 15px;
+  }
+}
