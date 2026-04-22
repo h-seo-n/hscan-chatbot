@@ -3,6 +3,9 @@ import { useCaseStore } from "../../core/util/caseStore"
 import { mockCases } from "../../core/util/mockCases";
 
 export function createA2UIHandler(orchestrator: Orchestrator) {
+
+    // const HEALTHINFO_API_URL = import.meta.env.VITE_HEALTHINFO_API_URL ?? "";
+
     const handleShowDoctorConsentAgree = () => {
         orchestrator.handleUserMessage("개인정보 유의사항에 모두 동의");
     }
@@ -38,6 +41,29 @@ export function createA2UIHandler(orchestrator: Orchestrator) {
         orchestrator.handleUserMessage("찾는 영상이 목록에 없습니다.");
     };
 
+    const handleRefreshCode = async () => {
+        // 새로운 6자리 랜덤 코드 생성
+        // try {
+        //     const url = new URL(`${HEALTHINFO_API_URL}/share-code`);
+        //     const res = await fetch(url.toString(), {
+        //         method: "POST",
+        //         body: JSON.stringify({
+        //             caseId: caseIds,
+        //         }),
+        //     });
+        //     if (!res.ok) {
+        //         throw new Error(`GET /case failed: ${res.status} ${res.statusText}`);
+        //     }
+
+        //     const data = await res.json();
+        //     const code = data.code;
+        //     return code;
+        // } catch (e) {
+        //       console.error("Refresh code error:", e);
+        // }
+        orchestrator.handleUserMessage("코드 다시 생성");
+    };
+
     return (action: string, payload: unknown) => {
         switch (action) {
       // scenario-1
@@ -47,7 +73,7 @@ export function createA2UIHandler(orchestrator: Orchestrator) {
       case "submit-images": handleSubmitImages(); break;
       case "deselect-image": handleDeselctImages(payload as string); break;
       case "not-found": handleNotFoundImages(); break;
-      case "refresh-code": break;
+      case "refresh-code": handleRefreshCode(); break;
       case "submit-questions": break;
       default: break;
     }
