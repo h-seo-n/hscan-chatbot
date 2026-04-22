@@ -17,7 +17,7 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
   switch (block.type) {
     case "show-doctor-video-consent-form":
       return (
-        <ConsentForm items={SHOW_DOCTOR_CONSENT_ITEMS} onConfirm={() => onAction?.("agree-show-doctor-consent", null)}/>
+        <ConsentForm items={SHOW_DOCTOR_CONSENT_ITEMS} onConfirm={() => onAction("agree-show-doctor-consent", null)}/>
       );
 
     case "image-selector":

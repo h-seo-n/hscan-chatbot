@@ -3,6 +3,10 @@ import { useCaseStore } from "../../core/util/caseStore"
 import { mockCases } from "../../core/util/mockCases";
 
 export function createA2UIHandler(orchestrator: Orchestrator) {
+    const handleShowDoctorConsentAgree = () => {
+        orchestrator.handleUserMessage("개인정보 유의사항에 모두 동의");
+    }
+
     const handleSelectImages = (caseId: string) => {
         const store = useCaseStore.getState();
         const alreadySelected = store.selectedCases.some((c) => c.caseId === caseId);
@@ -37,7 +41,7 @@ export function createA2UIHandler(orchestrator: Orchestrator) {
     return (action: string, payload: unknown) => {
         switch (action) {
       // scenario-1
-      case "show-doctor-video-consent-form": break;
+      case "show-doctor-video-consent-form": handleShowDoctorConsentAgree(); break;
       case "submit-questions": break;
       case "select-images": handleSelectImages(payload as string); break;
       case "submit-images": handleSubmitImages(); break;
