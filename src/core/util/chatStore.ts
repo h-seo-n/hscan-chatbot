@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { ChatMessage, A2UIBlock } from "./types";
+import type { ChatMessage, A2UIBlock } from "./types/generalTypes";
 
 /** ------ chat state ------- */
 interface ChatState {

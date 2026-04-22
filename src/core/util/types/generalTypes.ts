@@ -1,14 +1,25 @@
 /** -------- LLM ------ */
 export type LLMRequestMessage =
   | {
-      role: "user" | "assistant" | "system";
+      role: "user" | "system";
       content: string;
     }
   | {
-      role: "tool";
-      tool_call_id: string;
+      role: "assistant";
       content: string;
-    };
+      tool_calls?: {
+          id: string;
+          type: "function";
+          function: { name: string; arguments: string; }
+        }[];
+      }
+  | {
+    role: "tool";
+    tool_call_id: string;
+    content: string;
+  }
+    
+    ;
 
 export interface LLMResponse {
   content: string;
@@ -39,6 +50,7 @@ export interface ChatMessage {
   toolResult?: ToolResult; // tool 실행 결과 (only for role==="system")
   a2ui?: A2UIBlock; // A2UI를 활용한 dynamic block : LLM 응답 파싱 후 클라이언트 단에서 첨부
   timestamp: number;
+  hidden?: boolean; // ui에는 보이지 않지만 llm에게 전달됨
 }
 
 /** ------ MCP Client ------ */
@@ -46,7 +58,7 @@ export interface ChatMessage {
 export interface McpToolDefinition {
   name: string;
   description: string;
-  inputSchema: Record<string, unknown>;
+  inputSchema: Record<string, unknown>; // mcp protocol always garuntees it is always valid - no need to map / check
 }
 
 export interface McpCallToolRequest {

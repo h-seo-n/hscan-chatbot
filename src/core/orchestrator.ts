@@ -7,7 +7,7 @@ import type {
   ChatMessage,
   LLMRequestMessage,
   McpToolDefinition,
-} from "./util/types";
+} from "./util/types/generalTypes";
 
 /**
  *   1. 사용자 메시지를 받아 LLM API를 호출한다  (LLM caller)
@@ -15,9 +15,8 @@ import type {
  *   3. tool 실행 결과를 다시 LLM에 넘겨 최종 응답을 생성한다
  *   4. 응답에서 A2UI 블록을 파싱하여 ChatMessage에 첨부한다
  *
- * TODO: API 키 관리 방식 결정 (env / 사용자 입력 / 백엔드 프록시)
+ * TODO: API 키 관리 방식 결정 - (env / 사용자 입력 / 백엔드 프록시)
  * TODO: 스트리밍 응답 처리 (SSE → 점진적 UI 업데이트)
- * TODO: tool_call → tool_result → LLM 재호출 루프 최대 횟수 제한
  * TODO: 에러 발생 시 사용자에게 안내 메시지 표시
  */
 export class Orchestrator {
@@ -37,13 +36,27 @@ export class Orchestrator {
     console.log("[Orchestrator] initialized with tools:", this.tools.map((t) => t.name));
   }
 
+  /** LLM만 볼 수 있는 context message */
+  addHiddenMessage(userText: string, options?: { hidden?: boolean }): void {
+    useChatStore.getState().addMessage({
+      id: generateId(),
+      role: "user",
+      content: userText,
+      timestamp: Date.now(),
+      hidden: options?.hidden,
+    });
+  }
+
   /**
    * 사용자 메시지를 처리하는 메인 루프.
    *
    * Flow:
    *   userMessage → LLM → (tool_call?) → MCP → LLM → ... → assistantMessage
    */
-  async handleUserMessage(userText: string): Promise<void> {
+  async handleUserMessage(
+    userText: string, 
+    options?: { hidden?: boolean }
+  ): Promise<void> {
     const store = useChatStore.getState();
 
     // 1. 사용자 메시지를 store에 추가
@@ -52,6 +65,7 @@ export class Orchestrator {
       role: "user",
       content: userText,
       timestamp: Date.now(),
+      hidden: options?.hidden,
     };
     store.addMessage(userMsg);
     store.setLoading(true);
@@ -61,17 +75,45 @@ export class Orchestrator {
       const llmMessages = this.buildLLMMessages();
 
       // 3. LLM 호출
-      // TODO: tools를 OpenAI function calling 형식으로 변환
-      const llmResponse = await callLLM(llmMessages, this.apiKey);
+      let llmResponse = await callLLM(llmMessages, this.apiKey, this.tools);
 
       // 4. tool_call이 있으면 MCP 서버로 전달 후 재호출
-      if (hasToolCalls(llmResponse)) {
-        // TODO: tool_call 루프 구현
-        //   - 각 tool_call에 대해 mcpClient.callTool() 호출
-        //   - 결과를 tool role 메시지로 추가
-        //   - LLM 재호출하여 최종 텍스트 응답 획득
-        //   - 최대 반복 횟수 제한 (무한 루프 방지)
-        console.log("[Orchestrator] tool calls detected:", llmResponse.toolCalls);
+      let loop = 0;
+      const MAX_LOOP = 5;
+      while (hasToolCalls(llmResponse) && loop < MAX_LOOP) {
+        const toolCalls = llmResponse.toolCalls ?? [];
+
+        // assistant 메시지에 tool call 기록
+        store.addMessage({
+          id: generateId(),
+          role: "assistant",
+          content: llmResponse.content,
+          toolCalls,
+          timestamp: Date.now(),
+        });
+
+        // 각 tool 호출 후 결과를 tool 메시지로 추가
+        // forEach쓰면 안됨 - 반환된 promise 무시하기 때문에 for 이용
+        for (const tc of toolCalls) {
+          const result = await this.mcpClient.callTool({
+            toolName: tc.name,
+            arguments: tc.arguments,
+          });
+          store.addMessage({
+            id: generateId(),
+            role: "tool",
+            content: 
+              typeof result.content === "string"
+                ? result.content
+                : JSON.stringify(result.content),
+            toolResult: { toolCallId: tc.id, content: result.content },
+            timestamp: Date.now(),
+
+          });
+        };
+        // 최신 히스토리 기반 llm 다시 호출
+        llmResponse = await callLLM(this.buildLLMMessages(), this.apiKey, this.tools);
+        loop += 1;
       }
 
       // 5. A2UI 블록 파싱
@@ -101,7 +143,7 @@ export class Orchestrator {
   }
 
   /**
-   * store의 메시지 이력을 LLM API 요청 형식으로 변환한다.
+   * helper : store의 메시지 이력을 LLM API 요청 형식으로 변환
    */
   private buildLLMMessages(): LLMRequestMessage[] {
     const systemPrompt = buildSystemPrompt(this.tools);
@@ -114,8 +156,16 @@ export class Orchestrator {
     for (const msg of history) {
       if (msg.role === "user" || msg.role === "assistant") {
         messages.push({ role: msg.role, content: msg.content });
+      } else if (msg.role=== "tool" && msg.toolResult) {
+        messages.push({
+          role: "tool",
+          tool_call_id: msg.toolResult.toolCallId,
+          content:
+            typeof msg.toolResult.content === "string"
+              ? msg.toolResult.content
+              : JSON.stringify(msg.toolResult.content),
+        });
       }
-      // TODO: tool role 메시지도 변환하여 포함
     }
 
     return messages;
