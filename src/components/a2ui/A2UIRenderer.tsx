@@ -1,57 +1,59 @@
-import type { A2UIBlock } from "../../core/util/types";
-import HospitalSelector from "./examples/HospitalSelector";
-import VideoSelector from "./examples/VideoSelector";
-import PaymentForm from "./examples/PaymentForm";
-import InfoCard from "./examples/InfoCard";
+import type { A2UIBlock } from "../../core/util/types/generalTypes";
+
+// Scenario #1
+import ConsentForm from "./Scenario-1-Doc/ConsentForm";
+import ImageList from "./Scenario-1-Doc/ImageList";
+import SelectedImages from "./Scenario-1-Doc/SelectedImages";
+import Pincode from "./Scenario-1-Doc/Pincode";
+import QuestionForm from "./Scenario-1-Doc/QuestionForm";
+import { SHOW_DOCTOR_CONSENT_ITEMS } from "../../core/util/constant";
+import handleA2UIAction from "../A2UIHandlers";
 
 interface A2UIRendererProps {
   block: A2UIBlock;
-  onAction?: (action: string, payload: unknown) => void;
+  onAction: (action: string, payload: unknown) => void;
 }
 
-/**
- * A2UI 블록 타입에 따라 적절한 UI 컴포넌트를 렌더링하는 디스패처.
- *
- * LLM 응답에서 파싱된 A2UIBlock을 받아 해당하는 컴포넌트를 동적으로 선택한다.
- *
- * TODO: 새로운 A2UI 타입 추가 시 여기에 매핑 추가
- * TODO: 알 수 없는 타입에 대한 fallback UI
- * TODO: A2UI 컴포넌트 lazy loading (code splitting)
- */
 export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
   switch (block.type) {
-    case "hospital-selector":
+    case "show-doctor-video-consent-form":
       return (
-        <HospitalSelector
-          {...(block.props as Record<string, unknown>)}
-          onSelect={(hospitalId: string) =>
-            onAction?.("select-hospital", { hospitalId })
-          }
+        <ConsentForm items={SHOW_DOCTOR_CONSENT_ITEMS} onConfirm={() => onAction?.("agree-show-doctor-consent", null)}/>
+      );
+
+    case "image-selector":
+      return (
+        <ImageList 
+          onSelect={(caseId) => handleA2UIAction("select-images", caseId)}
+          onSubmit={() => handleA2UIAction("submit-images", null)}
+          onNotFound={() => handleA2UIAction("not-found", null)}
+        />
+
+      );
+
+    case "selected-images-list":
+      return (
+        <SelectedImages 
+          onRemove={(caseId) => handleA2UIAction("remove-image", caseId)}
+          onNotFound={() => handleA2UIAction("not-found", null)}
         />
       );
 
-    case "video-selector":
+    case "pincode":
       return (
-        <VideoSelector
-          {...(block.props as Record<string, unknown>)}
-          onSelect={(videoId: string) =>
-            onAction?.("select-video", { videoId })
-          }
+        <Pincode
+          code={block.props.code as string}
+          onRefreshCode={() => onAction?.("refresh-code", null)}
         />
       );
 
-    case "payment":
+    case "question-form":
       return (
-        <PaymentForm
-          {...(block.props as Record<string, unknown>)}
-          onConfirm={(paymentData: unknown) =>
-            onAction?.("confirm-payment", paymentData)
-          }
+        <QuestionForm
+          questions={block.props.questions as Parameters<typeof QuestionForm>[0]["questions"]}
+          onSubmit={(payload) => onAction?.("submit-questions", payload)}
         />
       );
-
-    case "info-card":
-      return <InfoCard {...(block.props as Record<string, unknown>)} />;
 
     default:
       console.warn("[A2UIRenderer] 알 수 없는 A2UI 타입:", block.type);

@@ -1,32 +1,17 @@
-import type { Case } from "../../../../core/util/types";
+import { useCaseStore } from "../../../../core/util/caseStore";
+import ImageCard from "../ImageList/ImageCard";
 import styles from "./SelectedImages.module.css";
 
-export type SelectedImageItem = Case;
-
-interface SelectedImagesProps {
-  cases?: SelectedImageItem[];
-  onRemove?: (imageId: string) => void;
-  onNotFound?: () => void;
+/** "20260320" → "2026.03.20" */
+function formatStudyDate(raw: string): string {
+  if (raw.length !== 8) return raw;
+  return `${raw.slice(0, 4)}.${raw.slice(4, 6)}.${raw.slice(6, 8)}`;
 }
 
-const fallbackCases: SelectedImageItem[] = [
-  {
-    id: "selected-image-1",
-    title: "영상 이름",
-    hospital: "촬영 병원",
-    capturedAt: "YYYY. MM. DD 촬영",
-    bodyPart: "촬영 부위",
-    modality: "Modality",
-  },
-  {
-    id: "selected-image-2",
-    title: "영상 이름",
-    hospital: "촬영 병원",
-    capturedAt: "YYYY. MM. DD 촬영",
-    bodyPart: "촬영 부위",
-    modality: "Modality",
-  },
-];
+interface SelectedImagesProps {
+  onRemove: (caseId: string) => void;
+  onNotFound: () => void;
+}
 
 const CloseIcon = () => (
   <svg
@@ -51,54 +36,40 @@ const CloseIcon = () => (
   </svg>
 );
 
-export default function SelectedImages({
-  cases = [],
-  onRemove,
-  onNotFound,
-}: SelectedImagesProps) {
-  const items = cases.length > 0 ? cases : fallbackCases;
+export default function SelectedImages({ onNotFound, onRemove }: SelectedImagesProps) {
+  const selectedCases = useCaseStore((s) => s.selectedCases);
 
   return (
     <div className={styles.list}>
-      {items.map((item) => (
-        <article className={styles.card} key={item.id}>
-          <div className={styles.cardContent}>
-            <div className={styles.thumbnail}>
-              {item.thumbnailUrl ? (
-                <img
-                  alt={`${item.title} 썸네일`}
-                  src={item.thumbnailUrl}
-                />
-              ) : (
-                <span className={styles.thumbnailLabel}>영상 이미지</span>
-              )}
-            </div>
+      {selectedCases.map((item) => {
+        const bodyPartLabel = item.bodyPart.filter(Boolean).join(", ") || "-";
+        const thumbnailId = item.contentIds[0];
 
-            <div className={styles.details}>
-              <div className={styles.titleRow}>
-                <span className={styles.title}>{item.title}</span>
-                <span className={styles.separator}>|</span>
-                <span className={styles.hospital}>{item.hospital}</span>
-              </div>
-              <div className={styles.metaRow}>
-                <span className={styles.meta}>{item.bodyPart}</span>
-                <span className={styles.separator}>|</span>
-                <span className={styles.meta}>{item.modality}</span>
-              </div>
-              <span className={styles.date}>{item.capturedAt}</span>
+        return (
+          <article className={styles.card} key={item.caseId}>
+            <div className={styles.cardContent}>
+              <ImageCard
+                isSelectable={false}
+                bodyPartLabel={bodyPartLabel} 
+                thumbnailId={thumbnailId} 
+                caseId={item.caseId} 
+                studyDescription={item.studyDescription} 
+                institutionName={item.institutionName} 
+                modality={item.modality} 
+                studyDate={item.studyDate} 
+              />
+              <button
+                aria-label={`${item.studyDescription} 제거`}
+                className={styles.removeButton}
+                onClick={() => onRemove(item.caseId)}
+                type="button"
+              >
+                <CloseIcon />
+              </button>
             </div>
-
-            <button
-              aria-label={`${item.title} 제거`}
-              className={styles.removeButton}
-              onClick={() => onRemove?.(item.id)}
-              type="button"
-            >
-              <CloseIcon />
-            </button>
-          </div>
-        </article>
-      ))}
+          </article>
+        );
+      })}
       {onNotFound ? (
         <button className={styles.notFoundButton} onClick={onNotFound} type="button">
           찾는 영상이 없다
