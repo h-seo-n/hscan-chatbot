@@ -85,7 +85,7 @@ const HomePage = ({ handleSendMessage, handleA2UIAction }: HomePageProps) => {
         </main>
         )}
         {/** 메시지 내역 */}
-        {messages.map((msg) => (
+        {messages.filter((m) => !m.hidden).map((msg) => (
             <MessageBubble
                 key={msg.id}
                 message={msg}

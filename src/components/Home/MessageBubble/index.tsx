@@ -1,4 +1,4 @@
-import type { ChatMessage } from "../../../core/util/types";
+import type { ChatMessage } from "../../../core/util/types/generalTypes";
 import A2UIRenderer from "../../a2ui/A2UIRenderer";
 import styles from "./MessageBubble.module.css";
 

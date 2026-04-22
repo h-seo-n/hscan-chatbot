@@ -1,6 +1,10 @@
 // 시리즈 내 이미지 ID
 type ImageId = string;
 
+// 필터 타입
+export type FilterType = 'eq' | 'equalsIgnoreCase' | 'contains' | 'containsIgnoreCase'
+
+
 // 시리즈
 interface Series {
   seriesNumber: string | null;

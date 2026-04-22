@@ -7,7 +7,6 @@ import SelectedImages from "./Scenario-1-Doc/SelectedImages";
 import Pincode from "./Scenario-1-Doc/Pincode";
 import QuestionForm from "./Scenario-1-Doc/QuestionForm";
 import { SHOW_DOCTOR_CONSENT_ITEMS } from "../../core/util/constant";
-import handleA2UIAction from "../A2UIHandlers";
 
 interface A2UIRendererProps {
   block: A2UIBlock;
@@ -24,9 +23,9 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
     case "image-selector":
       return (
         <ImageList 
-          onSelect={(caseId) => handleA2UIAction("select-images", caseId)}
-          onSubmit={() => handleA2UIAction("submit-images", null)}
-          onNotFound={() => handleA2UIAction("not-found", null)}
+          onSelect={(caseId) => onAction("select-images", caseId)}
+          onSubmit={() => onAction("submit-images", null)}
+          onNotFound={() => onAction("not-found", null)}
         />
 
       );
@@ -34,8 +33,8 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
     case "selected-images-list":
       return (
         <SelectedImages 
-          onRemove={(caseId) => handleA2UIAction("remove-image", caseId)}
-          onNotFound={() => handleA2UIAction("not-found", null)}
+          onRemove={(caseId) => onAction("remove-image", caseId)}
+          onNotFound={() => onAction("not-found", null)}
         />
       );
 
@@ -43,7 +42,7 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
       return (
         <Pincode
           code={block.props.code as string}
-          onRefreshCode={() => onAction?.("refresh-code", null)}
+          onRefreshCode={() => onAction("refresh-code", null)}
         />
       );
 
@@ -51,7 +50,7 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
       return (
         <QuestionForm
           questions={block.props.questions as Parameters<typeof QuestionForm>[0]["questions"]}
-          onSubmit={(payload) => onAction?.("submit-questions", payload)}
+          onSubmit={(payload) => onAction("submit-questions", payload)}
         />
       );
 
