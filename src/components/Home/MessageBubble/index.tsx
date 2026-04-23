@@ -5,7 +5,7 @@ import styles from "./MessageBubble.module.css";
 interface MessageBubbleProps {
   message: ChatMessage;
   /** A2UI 사용자 인터랙션 콜백 */
-  onA2UIAction?: (action: string, payload: unknown) => void;
+  onA2UIAction: (action: string, payload: unknown) => void;
 }
 
 /**
