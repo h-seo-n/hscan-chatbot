@@ -68,7 +68,7 @@ export interface McpCallToolRequest {
 
 export interface McpCallToolResponse {
   content: unknown;
-  isError?: boolean;
+  isError?: boolean | unknown;
 }
 
 
