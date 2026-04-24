@@ -7,8 +7,9 @@ import SelectedImages from "./components/a2ui/Scenario-1-Doc/SelectedImages";
 import ConsentForm from "./components/a2ui/Scenario-1-Doc/ConsentForm";
 import Pincode from "./components/a2ui/Scenario-1-Doc/Pincode";
 import AddressContactInfo from "./components/a2ui/Scenario-2-CD/AddressContactInfo";
-import DeliverInfoCard from "./components/a2ui/Scenario-2-CD/CDPurchaseCard/DeliverInfoCard";
-
+import CDPurchaseCard from "./components/a2ui/Scenario-2-CD/CDPurchaseCard";
+import HospitalList from "./components/a2ui/Scenario-3-Hosp/HospitalList";
+import PurchaseImaging from "./components/a2ui/Scenario-3-Hosp/PurchaseImaging";
 
 /**
  * 앱 루트 컴포넌트
@@ -55,16 +56,18 @@ function App() {
   return (
     <div>
       {/*original*/}
-      {<HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction}/>}
+      <HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction}/>
       
-      {/*for component render 
+      {/*Scenario1,2,3
 	    <QuestionForm questions={[]} />
       <ImageList/>
       <SelectedImages/>
       <ConsentForm/>
-      {/*<Pincode code={pincode} onRefreshCode={handleRefreshCode}/>
+      <Pincode code={pincode} onRefreshCode={handleRefreshCode}/>
       <AddressContactInfo/>
-      <DeliverInfoCard/>*/}
+      <CDPurchaseCard/>
+      <HospitalList/>
+      <PurchaseImaging/>*/}
     </div>
   );}
 
