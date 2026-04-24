@@ -1,11 +1,9 @@
-import { useState } from "react";
 import checkIcon from "../../../../../assets/check.svg";
 import styles from "./MedicalConsentForm.module.css";
 
 interface MedicalConsentFormProps {
-  checked?: boolean;
-  defaultChecked?: boolean;
-  onCheckedChange?: (checked: boolean) => void;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
 }
 
 const DESCRIPTION =
@@ -15,20 +13,10 @@ const CONFIRMATION_LABEL = "위 내용을 모두 확인했습니다";
 
 export default function MedicalConsentForm({
   checked,
-  defaultChecked = false,
   onCheckedChange,
 }: MedicalConsentFormProps) {
-  const [internalChecked, setInternalChecked] = useState(defaultChecked);
-  const isChecked = checked ?? internalChecked;
-
   const handleToggle = () => {
-    const nextChecked = !isChecked;
-
-    if (checked === undefined) {
-      setInternalChecked(nextChecked);
-    }
-
-    onCheckedChange?.(nextChecked);
+    onCheckedChange(!checked);
   };
 
   return (
@@ -37,14 +25,14 @@ export default function MedicalConsentForm({
         <p className={styles.description}>{DESCRIPTION}</p>
 
         <button
-          aria-pressed={isChecked}
-          className={`${styles.confirmButton} ${isChecked ? styles.confirmButtonChecked : ""}`}
+          aria-pressed={checked}
+          className={`${styles.confirmButton} ${checked ? styles.confirmButtonChecked : ""}`}
           onClick={handleToggle}
           type="button"
         >
           <span
             aria-hidden="true"
-            className={`${styles.checkbox} ${isChecked ? styles.checkboxChecked : ""}`}
+            className={`${styles.checkbox} ${checked ? styles.checkboxChecked : ""}`}
           >
             <img alt="" className={styles.checkIcon} src={checkIcon} />
           </span>

@@ -3,10 +3,10 @@ import styles from "./PurchaseTable.module.css";
 type PriceValue = number | string;
 
 export interface PurchaseTableProps {
-  selectedVideoCount?: number | string;
-  issueCost?: PriceValue;
-  agencyFee?: PriceValue;
-  vat?: PriceValue;
+  selectedVideoCount: number | string;
+  issueCost: PriceValue;
+  agencyFee: PriceValue;
+  vat: PriceValue;
 }
 
 export const fallbackPurchaseTableProps = {
@@ -41,7 +41,7 @@ export const calculatePurchaseTotal = ({
   issueCost = fallbackPurchaseTableProps.issueCost,
   agencyFee = fallbackPurchaseTableProps.agencyFee,
   vat = fallbackPurchaseTableProps.vat,
-}: Pick<PurchaseTableProps, "issueCost" | "agencyFee" | "vat"> = {}) =>
+}: Partial<PurchaseTableProps> = {}) =>
   parsePrice(issueCost) + parsePrice(agencyFee) + parsePrice(vat);
 
 export default function PurchaseTable({
