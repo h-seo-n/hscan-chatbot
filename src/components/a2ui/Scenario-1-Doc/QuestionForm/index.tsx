@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import styles from "./QuestionForm.module.css";
+import z from "zod";
+import { QuestionSchema } from "../../../../core/util/types/a2uiSchema";
 
-export interface QuestionFormItem {
-  question: string;
-  hasInput: boolean;
-  placeholder?: string;
-}
+type QuestionFormItem = z.infer<typeof QuestionSchema>;
 
 export interface QuestionResponse {
   selectedQuestions: Array<{

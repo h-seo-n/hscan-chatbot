@@ -1,3 +1,5 @@
+import type { A2UIBlock } from "./a2uiSchema";
+
 /** -------- LLM ------ */
 export type LLMRequestMessage =
   | {
@@ -48,9 +50,11 @@ export interface ChatMessage {
   content: string;
   toolCalls?: ToolCall[]; // tool 요청 내역 (only for role==="assistant")
   toolResult?: ToolResult; // tool 실행 결과 (only for role==="system")
-  a2ui?: A2UIBlock; // A2UI를 활용한 dynamic block : LLM 응답 파싱 후 클라이언트 단에서 첨부
+  a2uiBlocks: A2UIBlock[]; // A2UI를 활용한 dynamic block : LLM 응답 파싱 후 클라이언트 단에서 첨부
   timestamp: number;
   hidden?: boolean; // ui에는 보이지 않지만 llm에게 전달됨
+  streaming?: boolean; // streaming 형태로 llm에게 응답을 받는지의 여부 (대부분 true)
+  aborted?: boolean; // 중간에 중단했는지
 }
 
 /** ------ MCP Client ------ */
@@ -71,28 +75,9 @@ export interface McpCallToolResponse {
   isError?: boolean | unknown;
 }
 
-
-
-/** ---------- A2UI 관련 types ---------- */
-export type A2UIType =
-  // TODO : 무슨 UI block 종류 있는지 다 넣기
-  // Scenario #1 - 제휴아닌병원 의사에게 영상 보여주기
-  | "show-doctor-video-consent-form"
-  | "image-selector"
-  | "pincode"
-  | "question-form"
-  | "selected-images-list"
-  // Scenario #2 - 이미 있는 영상 등록
-  | "address-contact-input"
-  | "medical-consent-form"
-  | "delivery-info-card"
-  | "cd-purchase-card"
-  // Scenario #7 - 영상 목록 조회, 다운로드
-  | "download-selector"  
-  ;
-
-export interface A2UIBlock {
-  type: A2UIType;
-  // 각 A2UI 컴포넌트에 전달될 props
-  props: Record<string, unknown>;
+/** Logger */
+export interface Logger {
+  debug(message: string, context?: Record<string, unknown>): void;
+  warn(message: string, context?: Record<string, unknown>): void;
+  error(message: string, context?: Record<string, unknown>): void;
 }

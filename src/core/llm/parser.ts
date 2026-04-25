@@ -17,7 +17,7 @@ export interface ParseA2UIResult {
 
 export interface A2UIParseError {
   raw: string;
-  reason: "json" | "schema" | "incomplete";
+  reason: "json" | "schema" | "incomplete"; // 1. wrong json format / 2. wrong schema for component props, etc. / 3. A2UI component parsing incomplete
   detail: string;
   index: number;
 }
@@ -172,8 +172,8 @@ export class A2UIStreamParser {
   }
 
   /**
-   * 버퍼에 있는 string들을 가능한만큼 consume 후,
-   * 텍스트/블록으로 변환하며 방출
+   * 버퍼에 있는 string들을 가능한만큼
+   * 텍스트/a2ui 블록 형태로 emit (=렌더링)
    */
   private drain(): void {
     while (true) {
