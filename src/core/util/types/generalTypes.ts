@@ -50,7 +50,7 @@ export interface ChatMessage {
   content: string;
   toolCalls?: ToolCall[]; // tool 요청 내역 (only for role==="assistant")
   toolResult?: ToolResult; // tool 실행 결과 (only for role==="system")
-  a2uiBlocks: A2UIBlock[]; // A2UI를 활용한 dynamic block : LLM 응답 파싱 후 클라이언트 단에서 첨부
+  a2uiBlocks?: A2UIBlock[]; // A2UI를 활용한 dynamic block : LLM 응답 파싱 후 클라이언트 단에서 첨부
   timestamp: number;
   hidden?: boolean; // ui에는 보이지 않지만 llm에게 전달됨
   streaming?: boolean; // streaming 형태로 llm에게 응답을 받는지의 여부 (대부분 true)
@@ -80,4 +80,5 @@ export interface Logger {
   debug(message: string, context?: Record<string, unknown>): void;
   warn(message: string, context?: Record<string, unknown>): void;
   error(message: string, context?: Record<string, unknown>): void;
+  child(context: Record<string, unknown>): Logger;
 }
