@@ -41,10 +41,12 @@ const MessageBubble = ({ message, onA2UIAction }: MessageBubbleProps) => {
       </div>
 
       {/* A2UI 블록이 있으면 렌더링 */}
-      {message.a2ui && (
-        <div className={styles.messageA2ui}>
-          <A2UIRenderer block={message.a2ui} onAction={onA2UIAction} />
-        </div>
+      {message.a2uiBlocks && (
+        message.a2uiBlocks.map(b => (
+          <div className={styles.messageA2ui}>
+            <A2UIRenderer block={b} onAction={onA2UIAction} />
+          </div>
+        ))
       )}
     </div>
   );
