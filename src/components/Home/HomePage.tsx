@@ -36,6 +36,7 @@ const ACTION_ITEMS: ActionItem[] = [
 interface HomePageProps {
     handleSendMessage: (text: string) => void;
     handleA2UIAction: (action: string, payload: unknown) => void;
+    handleAbort: () => void
 }
 
 const HomePage = ({ handleSendMessage, handleA2UIAction }: HomePageProps) => {
