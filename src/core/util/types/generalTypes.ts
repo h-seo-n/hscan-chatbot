@@ -1,5 +1,19 @@
 import type { A2UIBlock } from "./a2uiSchema";
 
+/** ----- USER ------------- */
+export interface UserInfo {
+  userId: string;
+  username: string;
+  name: string;
+  gender: string;
+  email: string;
+  telecom: string;
+  birthDate: string; // "YYYY-MM-DD"
+  identified: boolean;
+  phoneNumberVerified: boolean;
+  locale: string;
+}
+
 /** -------- LLM ------ */
 export type LLMRequestMessage =
   | {
@@ -19,9 +33,7 @@ export type LLMRequestMessage =
     role: "tool";
     tool_call_id: string;
     content: string;
-  }
-    
-    ;
+  };
 
 export interface LLMResponse {
   content: string;
@@ -58,7 +70,6 @@ export interface ChatMessage {
 }
 
 /** ------ MCP Client ------ */
-
 export interface McpToolDefinition {
   name: string;
   description: string;
@@ -82,3 +93,5 @@ export interface Logger {
   error(message: string, context?: Record<string, unknown>): void;
   child(context: Record<string, unknown>): Logger;
 }
+
+export type AccessTokenProvider = () => string | undefined;
