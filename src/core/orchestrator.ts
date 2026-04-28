@@ -2,12 +2,14 @@ import { McpClient } from "./mcp/mcpClient";
 import { callLLMStream, type LLMClientConfig } from "./llm/client";
 import { buildSystemPrompt } from "./llm/prompts";
 import { useChatStore, generateId } from "./util/chatStore";
+
 import type {
   ChatMessage,
   LLMRequestMessage,
   McpToolDefinition,
   Logger,
-  ToolCall
+  ToolCall,
+  AccessTokenProvider
 } from "./util/types/generalTypes";
 
 
@@ -32,8 +34,11 @@ export class Orchestrator {
     baseUrl: string;
     model: string;
     logger?: Logger;
+    getAccessToken: AccessTokenProvider;
   }) {
-    this.mcpClient = new McpClient();
+    this.mcpClient = new McpClient({
+      getAccessToken: config.getAccessToken,
+    });
     this.llmConfig = {
       apiKey: config.apiKey,
       baseUrl: config.baseUrl,

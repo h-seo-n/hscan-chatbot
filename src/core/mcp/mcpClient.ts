@@ -5,6 +5,8 @@ import type {
   McpCallToolRequest,
   McpCallToolResponse,
 } from "../util/types/generalTypes";
+import type { AccessTokenProvider } from "../util/types/generalTypes";
+import { createAuthenticatedFetch } from "../util/auth/authFetch";
 
 // TODO: MCP 서버 주소를 환경변수 / 설정에서 로드
 const MCP_SERVER_URL = import.meta.env.VITE_MCP_SERVER_URL;
@@ -25,9 +27,11 @@ export class McpClient {
   private baseUrl: string;
   private client: Client | null = null;
   private transport: StreamableHTTPClientTransport | null = null;
+  private fetchFn: typeof fetch;
 
-  constructor(baseUrl: string = MCP_SERVER_URL) {
-    this.baseUrl = baseUrl;
+  constructor(opts: { baseUrl?: string, getAccessToken: AccessTokenProvider }) {
+    this.baseUrl = opts.baseUrl ?? MCP_SERVER_URL;
+    this.fetchFn = createAuthenticatedFetch(opts.getAccessToken);
   }
 
   /** 세션 아이디 : transport가 내부적으로 관리 */
@@ -44,17 +48,13 @@ export class McpClient {
     if (this.client) return;
     console.log("[McpClient] connecting to", this.baseUrl);
 
-    this.transport = new StreamableHTTPClientTransport(
-      new URL(this.baseUrl),
-    );
+    this.transport = new StreamableHTTPClientTransport(new URL(this.baseUrl), {
+      fetch: this.fetchFn, // 매 요청에 토큰 헤더 자동 입력
+    });
+
     this.client = new Client(
-            {
-        name: "hscan-healthhub-chatbot",
-        version: "0.1.0",
-      },
-      {
-        capabilities: {},
-      }
+      { name: "hscan-healthhub-chatbot", version: "0.1.0" },
+      { capabilities: {} },
     );
 
     await this.client.connect(this.transport);

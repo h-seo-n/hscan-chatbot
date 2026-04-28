@@ -10,6 +10,7 @@ import HomePage from "./components/Home/HomePage";
 // import DeliverInfoCard from "./components/a2ui/Scenario-2-CD/CDPurchaseCard/DeliverInfoCard";
 import { createA2UIHandler } from "./components/a2ui/A2UIHandlers";
 import { consoleLogger, sentryLogger } from "./core/util/logger";
+import { useAuth } from "./core/util/auth/useAuth";
 
 type InitStatus =
   | { kind: "idle" }
@@ -24,10 +25,25 @@ type InitStatus =
 function App() {
   const orchestratorRef = useRef<Orchestrator | null>(null);
   const [initStatus, setInitStatus] = useState<InitStatus>({ kind: "idle" });
+  const { isAuthenticated, user, fetchUser, accessToken } = useAuth();
 
   const logger = import.meta.env.DEV ? consoleLogger : sentryLogger;
   const appLogger = logger.child({ scope: "App" });
   const orchestratorLogger = logger.child({ scope: "Orchestrator" });
+
+  const accessTokenRef = useRef(accessToken);
+  useEffect(() => { // 항상 최신 토큰을 가리키는 ref
+    accessTokenRef.current = accessToken;
+  }, [accessToken]);
+
+  // useEffect: authentication 변화 시 user 정보 GET
+  useEffect(() => {
+    if (isAuthenticated && !user) {
+      fetchUser().catch((err) => {
+        appLogger.error("userInfo 가져오기 실패", { error : err });
+      });
+    }
+  }, [isAuthenticated, user])
 
   // useEffect : Orchestrator 생성 & 초기화
   useEffect(() => {
@@ -35,7 +51,7 @@ function App() {
     const baseUrl =
       import.meta.env.VITE_LLM_BASE_URL ??
       "https://api.openai.com/v1/chat/completions";
-    const model = import.meta.env.VITE_LLM_MODEL ?? "gpt-4o";
+    const model = import.meta.env.VITE_LLM_MODEL ?? "gpt-5.4-mini";
 
     if (!apiKey) {
       setInitStatus({
@@ -44,11 +60,13 @@ function App() {
       });
       return;
     }
+
     const orchestrator = new Orchestrator({
       apiKey,
       baseUrl,
       model,
       logger: orchestratorLogger,
+      getAccessToken: () => accessTokenRef.current,
     });
     orchestratorRef.current = orchestrator;
 
@@ -136,10 +154,7 @@ function App() {
 
   return (
     <div>
-      {/*original*/}
-      <HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction} handleAbort={handleAbort}/>
-      
-      
+        <HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction} handleAbort={handleAbort}/>
 	    {/* <QuestionForm questions={[]} />
       <ImageList 
         onSelect={(caseId) => handleA2UIAction("select-images", caseId)}
