@@ -12,7 +12,7 @@ interface AddressContactInfoInitialValues {
 }
 
 interface AddressContactInfoProps {
-  onSubmit: (
+  onSubmit?: (
     address: string,
     addressDetail: string,
     name: string,
@@ -62,7 +62,7 @@ export default function AddressContactInfo({
       return;
     }
 
-    onSubmit(address.trim(), addressDetail.trim(), name.trim(), tel.trim());
+    onSubmit?.(address.trim(), addressDetail.trim(), name.trim(), tel.trim());
   };
 
   return (

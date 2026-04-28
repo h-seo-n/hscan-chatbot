@@ -4,8 +4,7 @@ import type { Logger } from "../util/types/generalTypes";
 import { A2UIStreamParser, parseA2UI, type A2UIParseError } from "./parser";
 
 // TODO: 환경변수 또는 설정 파일에서 로드하도록 변경
-const LLM_API_URL = "https://api.openai.com/v1/chat/completions";
-const LLM_MODEL = "gpt-4o";
+const LLM_MODEL = import.meta.env.VITE_LLM_MODEL;
 
 export interface LLMClientConfig {
   baseUrl: string;
@@ -138,6 +137,7 @@ export async function callLLM(
         },
         body: JSON.stringify(body),
       });
+
       // llm error
       if (!res.ok) {
         const kind = classifyStatus(res.status);
@@ -296,6 +296,7 @@ export async function callLLMStream(
   });
 
   let res: Response;
+
   try {
     res = await fetch(config.baseUrl, {
       method: "POST",
@@ -425,7 +426,7 @@ function processSSEEvent(
       continue;
     }
 
-    const delta = parsed.choces?.[0]?.delta;
+    const delta = parsed.choices?.[0]?.delta;
     if (!delta) continue;
 
     // 1. text content
