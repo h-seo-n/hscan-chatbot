@@ -10,6 +10,7 @@ import AddressContactInfo from "./components/a2ui/Scenario-2-CD/AddressContactIn
 import CDPurchaseCard from "./components/a2ui/Scenario-2-CD/CDPurchaseCard";
 import HospitalList from "./components/a2ui/Scenario-3-Hosp/HospitalList";
 import PurchaseImaging from "./components/a2ui/Scenario-3-Hosp/PurchaseImaging";
+import DownloadImageList from "./components/a2ui/Scenario-7-Down/DownloadImageList";
 
 /**
  * 앱 루트 컴포넌트
@@ -67,7 +68,8 @@ function App() {
       <AddressContactInfo/>
       <CDPurchaseCard/>
       <HospitalList/>
-      <PurchaseImaging/>*/}
+      <PurchaseImaging/>
+      <DownloadImageList/>*/}
     </div>
   );}
 
