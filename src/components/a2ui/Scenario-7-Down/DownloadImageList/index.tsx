@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Case } from "../../../../core/util/types";
+import type { Case } from "../../../../../core/util/types/caseTypes";
 import styles from "./DownloadImageList.module.css";
 
 export type DownloadImageListItem = Case;
@@ -131,7 +131,7 @@ export default function DownloadImageList({
     <div className={styles.container}>
       <div className={styles.content}>
         <div className={styles.listWrap}>
-          <div className={styles.list} ref={listRef} onScroll={handleScroll}>
+          <div className={styles.list} ref={listRef}>
             {items.map((item) => {
               const isSelected = selectedIds.includes(item.id);
 

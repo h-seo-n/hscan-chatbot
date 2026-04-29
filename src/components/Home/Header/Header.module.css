@@ -1,20 +1,28 @@
 .loginButton {
-  padding: 8px 20px;
-  border-radius: 8px;
   border: 1px solid #d1d5db;
   background-color: #ffffff;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.loginButton:hover {
+  background-color: #f5f6f8;
+}
+
+.userInfoBtn {
+  border: 1px solid #899ebc;
+  background-color: #dae5fd;
+}
+
+.authBtn {
+  padding: 6px 18px;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
   color: #1a1d26;
-  cursor: pointer;
   font-family:
     "Pretendard",
     "Noto Sans KR",
     -apple-system,
     sans-serif;
-  transition: background-color 0.2s ease;
-}
-
-.loginButton:hover {
-  background-color: #f5f6f8;
 }

@@ -2,6 +2,7 @@ import type { FormEvent } from "react";
 import { useId, useState } from "react";
 import { FiSearch } from "react-icons/fi";
 import styles from "./AddressContactInfo.module.css";
+import { NextButton } from "../../widgets/NextButton";
 
 interface AddressContactInfoInitialValues {
   address?: string;
@@ -11,7 +12,7 @@ interface AddressContactInfoInitialValues {
 }
 
 interface AddressContactInfoProps {
-  onSubmit: (
+  onSubmit?: (
     address: string,
     addressDetail: string,
     name: string,
@@ -61,7 +62,7 @@ export default function AddressContactInfo({
       return;
     }
 
-    onSubmit(address.trim(), addressDetail.trim(), name.trim(), tel.trim());
+    onSubmit?.(address.trim(), addressDetail.trim(), name.trim(), tel.trim());
   };
 
   return (
@@ -141,10 +142,7 @@ export default function AddressContactInfo({
           </div>
         </div>
       </section>
-
-      <button className={styles.submitButton} disabled={!isComplete} type="submit">
-        입력 완료
-      </button>
+      <NextButton canMoveOn={isComplete} text="입력 완료" />
     </form>
   );
 }

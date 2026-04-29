@@ -1,10 +1,12 @@
 import { useState } from "react";
 import styles from "./ChatInput.module.css";
-import { FaArrowUp } from "react-icons/fa6";
+import { FaArrowUp, FaStop } from "react-icons/fa6";
 
 interface ChatInputProps {
   placeholder?: string;
   onSubmit?: (value: string) => void;
+  isStreaming?: boolean;
+  onAbort?: () => void;
 }
 
 /**
@@ -16,7 +18,9 @@ interface ChatInputProps {
  */
 const ChatInput = ({
   placeholder = "무엇을 하고싶으신지 입력해주세요 ...",
+  isStreaming = false,
   onSubmit,
+  onAbort,
 }: ChatInputProps) => {
   const [value, setValue] = useState("");
 
@@ -35,9 +39,7 @@ const ChatInput = ({
   };
 
   return (
-    <div
-        className={styles.chatContainer}
-    >
+    <div className={styles.chatContainer}>
       <textarea
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -45,14 +47,21 @@ const ChatInput = ({
         placeholder={placeholder}
         rows={2}
         className={styles.chatInput}
+        disabled={isStreaming}
       />
-      <button
-        onClick={handleSubmit}
-        className={styles.sendBtn}
-        disabled={!value.trim()}
-      >
-        <FaArrowUp color="white" width={20}/>
-      </button>
+      {isStreaming ? (
+        <button onClick={onAbort} className={styles.sendBtn} aria-label="중지">
+          <FaStop color="white" size={14} />
+        </button>
+      ) : (
+        <button
+          onClick={handleSubmit}
+          className={styles.sendBtn}
+          disabled={!value.trim()}
+        >
+          <FaArrowUp color="white" width={20}/>
+        </button>
+      )}
     </div>
   );
 };

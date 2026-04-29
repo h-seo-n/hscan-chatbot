@@ -1,5 +1,12 @@
-.card {
+.container {
   width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card {
+  width: 100%;
   padding: 18px 20px 17px;
   background: #ffffff;
   border: 1px solid #d6d6d6;
@@ -10,6 +17,7 @@
 .allConsentButton,
 .itemRow {
   display: flex;
+  flex-flow: row nowrap;
   width: 100%;
   padding: 0;
   border: 0;
@@ -36,11 +44,7 @@
 
 .allConsentLabel {
   color: #2d61d4;
-  font-family:
-    "Pretendard",
-    "Apple SD Gothic Neo",
-    "Noto Sans KR",
-    sans-serif;
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
   font-size: 22px;
   font-weight: 700;
   line-height: 1.25;
@@ -97,11 +101,7 @@
 
 .itemLabel {
   color: #4b4b4b;
-  font-family:
-    "Pretendard",
-    "Apple SD Gothic Neo",
-    "Noto Sans KR",
-    sans-serif;
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
   font-size: 20px;
   font-weight: 700;
   line-height: 1.48;
@@ -136,7 +136,6 @@
 
   .itemRow {
     gap: 12px;
-    flex-wrap: wrap;
   }
 
   .itemLabel {

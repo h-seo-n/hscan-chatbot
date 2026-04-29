@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import styles from "./Pincode.module.css";
 
 interface PincodeProps {
-  code: string;
-  onRefreshCode?: () => void;
+  code: string; // tool 이용 결과로 반환됨, LLM이 prop으로 넣음
+  onRefreshCode: () => void; // "핀 코드 다시 생성" AI에게 메시지 입력
 }
 
 const DIGIT_COUNT = 6;

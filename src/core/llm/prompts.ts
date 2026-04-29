@@ -1,4 +1,4 @@
-import type { McpToolDefinition } from "../util/types";
+import type { McpToolDefinition } from "../util/types/generalTypes";
 
 /**
  * 시스템 프롬프트를 생성한다.

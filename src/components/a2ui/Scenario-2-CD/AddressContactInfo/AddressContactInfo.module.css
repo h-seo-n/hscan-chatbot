@@ -26,13 +26,8 @@
 .contactDescription,
 .label,
 .textField,
-.searchField input,
-.submitButton {
-  font-family:
-    "Pretendard",
-    "Apple SD Gothic Neo",
-    "Noto Sans KR",
-    sans-serif;
+.searchField input {
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
   letter-spacing: -0.0494px;
 }
 
@@ -143,41 +138,6 @@
   border: 0;
 }
 
-.submitButton {
-  width: min(304px, 100%);
-  min-height: 58px;
-  padding: 15px 24px;
-  border: 0;
-  border-radius: 15px;
-  background: #9cb3ee;
-  color: #ffffff;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 28px;
-  cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    opacity 0.2s ease;
-}
-
-.submitButton:enabled {
-  background: #0059E6;
-}
-
-.submitButton:disabled {
-  background: #beccf3;
-  cursor: not-allowed;
-}
-
-.submitButton:enabled:hover {
-  background: #004ecc;
-}
-
-.submitButton:focus-visible {
-  outline: 3px solid rgba(156, 179, 238, 0.35);
-  outline-offset: 3px;
-}
-
 @media (max-width: 420px) {
   .form {
     width: 100%;
@@ -191,8 +151,7 @@
   .contactDescription,
   .label,
   .textField,
-  .searchField input,
-  .submitButton {
+  .searchField input {
     font-size: clamp(18px, 4vw, 20px);
   }
 }
