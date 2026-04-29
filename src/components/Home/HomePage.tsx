@@ -36,9 +36,10 @@ const ACTION_ITEMS: ActionItem[] = [
 interface HomePageProps {
     handleSendMessage: (text: string) => void;
     handleA2UIAction: (action: string, payload: unknown) => void;
+    handleAbort: () => void
 }
 
-const HomePage = ({ handleSendMessage, handleA2UIAction }: HomePageProps) => {
+const HomePage = ({ handleSendMessage, handleA2UIAction, handleAbort }: HomePageProps) => {
     const messages = useChatStore((s) => s.messages);
     const isLoading = useChatStore((s) => s.isLoading);
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -48,16 +49,13 @@ const HomePage = ({ handleSendMessage, handleA2UIAction }: HomePageProps) => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-
     const handleActionClick = (id: string) => {
         console.log(`Action clicked: ${id}`);
     };
 
     return (
     <div className={styles.pageContainer}>
-        {/** TODO : Login 클릭 시 Login 모달 나오도록 */}
-        <Header onLoginClick={() => console.log("Login clicked")} />
-
+        <Header />
 
         {/** 메시지 X인 처음 상태 */}
         {messages.length === 0 && (
@@ -85,7 +83,7 @@ const HomePage = ({ handleSendMessage, handleA2UIAction }: HomePageProps) => {
         </main>
         )}
         {/** 메시지 내역 */}
-        {messages.map((msg) => (
+        {messages.filter((m) => !m.hidden).map((msg) => (
             <MessageBubble
                 key={msg.id}
                 message={msg}
@@ -98,8 +96,13 @@ const HomePage = ({ handleSendMessage, handleA2UIAction }: HomePageProps) => {
         )}
 
         <footer className={styles.chatFooter} ref={bottomRef}>
-            <ChatInput onSubmit={handleSendMessage} />
+            <ChatInput 
+                onSubmit={handleSendMessage} 
+                isStreaming={isLoading}
+                onAbort={handleAbort}    
+            />
         </footer>
+        
     </div>
     );
 };

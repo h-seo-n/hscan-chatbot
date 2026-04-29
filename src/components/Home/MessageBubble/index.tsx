@@ -1,11 +1,11 @@
-import type { ChatMessage } from "../../../core/util/types";
+import type { ChatMessage } from "../../../core/util/types/generalTypes";
 import A2UIRenderer from "../../a2ui/A2UIRenderer";
 import styles from "./MessageBubble.module.css";
 
 interface MessageBubbleProps {
   message: ChatMessage;
   /** A2UI 사용자 인터랙션 콜백 */
-  onA2UIAction?: (action: string, payload: unknown) => void;
+  onA2UIAction: (action: string, payload: unknown) => void;
 }
 
 /**
@@ -41,10 +41,12 @@ const MessageBubble = ({ message, onA2UIAction }: MessageBubbleProps) => {
       </div>
 
       {/* A2UI 블록이 있으면 렌더링 */}
-      {message.a2ui && (
-        <div className={styles.messageA2ui}>
-          <A2UIRenderer block={message.a2ui} onAction={onA2UIAction} />
-        </div>
+      {message.a2uiBlocks && (
+        message.a2uiBlocks.map(b => (
+          <div className={styles.messageA2ui}>
+            <A2UIRenderer block={b} onAction={onA2UIAction} />
+          </div>
+        ))
       )}
     </div>
   );

@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import styles from "./ConsentForm.module.css";
+import { NextButton } from "../../widgets/NextButton";
 
 interface ConsentFormProps {
   title?: string;
   items?: string[];
-  onChange?: (selectedIds: string[], allChecked: boolean) => void;
+  onConfirm?: () => void;
 }
 
 const fallbackItems: string[] = [
@@ -33,7 +34,7 @@ const CheckIcon = () => (
 export default function ConsentForm({
   title = "전체 동의",
   items = fallbackItems,
-  onChange,
+  onConfirm,
 }: ConsentFormProps) {
   // make sure no empty array passes through the prop
   const resolvedItems: string[] = useMemo(
@@ -47,10 +48,6 @@ export default function ConsentForm({
     resolvedItems.length > 0 &&
     resolvedItems.every((item) => selectedItems.includes(item));
 
-  useEffect(() => {
-    onChange?.(selectedItems, isAllChecked);
-  }, [isAllChecked, onChange, selectedItems]);
-    
   const toggleAll = () => {
     setSelectedItems(isAllChecked ? [] : resolvedItems);
   };
@@ -63,47 +60,51 @@ export default function ConsentForm({
     );
   };
 
-
-
   return (
-    <section className={styles.card}>
-      <button
-        aria-pressed={isAllChecked}
-        className={`${styles.allConsentButton} ${isAllChecked ? styles.allConsentButtonChecked : ""}`}
-        onClick={toggleAll}
-        type="button"
-      >
-        <span
-          aria-hidden="true"
-          className={`${styles.checkbox} ${styles.checkboxLarge} ${isAllChecked ? styles.checked : ""}`}
+    <div className={styles.container}>
+      <section className={styles.card}>
+        {/** 모두 동의 버튼 */}
+        <button
+          aria-pressed={isAllChecked}
+          className={`${styles.allConsentButton} ${isAllChecked ? styles.allConsentButtonChecked : ""}`}
+          onClick={toggleAll}
+          type="button"
         >
-          <CheckIcon />
-        </span>
-        <span className={styles.allConsentLabel}>{title}</span>
-      </button>
+          <span
+            aria-hidden="true"
+            className={`${styles.checkbox} ${styles.checkboxLarge} ${isAllChecked ? styles.checked : ""}`}
+          >
+            <CheckIcon />
+          </span>
+          <span className={styles.allConsentLabel}>{title}</span>
+        </button>
 
-      <div className={styles.itemList}>
-        {resolvedItems.map((item) => {
-          const isChecked = selectedItems.includes(item);
+        {/** 개인정보 동의란 버튼들 */}
+        <div className={styles.itemList}>
+          {resolvedItems.map((item, index) => {
+            const isChecked = selectedItems.includes(item);
 
-          return (
-            <button
-              aria-pressed={isChecked}
-              className={styles.itemRow}
-              onClick={() => toggleItem(item)}
-              type="button"
-            >
-              <span
-                aria-hidden="true"
-                className={`${styles.checkbox} ${isChecked ? styles.checked : ""}`}
+            return (
+              <button
+                aria-pressed={isChecked}
+                className={styles.itemRow}
+                onClick={() => toggleItem(item)}
+                type="button"
+                key={index}
               >
-                <CheckIcon />
-              </span>
-              <span className={styles.itemLabel}>{item}</span>
-            </button>
-          );
-        })}
-      </div>
-    </section>
+                <span
+                  aria-hidden="true"
+                  className={`${styles.checkbox} ${isChecked ? styles.checked : ""}`}
+                >
+                  <CheckIcon />
+                </span>
+                <span className={styles.itemLabel}>{item}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+      <NextButton canMoveOn={isAllChecked} type="button" text="확인 완료" onClick={onConfirm}/>
+    </div>
   );
 }

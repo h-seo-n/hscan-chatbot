@@ -1,11 +1,15 @@
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type {
   McpToolDefinition,
   McpCallToolRequest,
   McpCallToolResponse,
-} from "../util/types";
+} from "../util/types/generalTypes";
+import type { AccessTokenProvider } from "../util/types/generalTypes";
+import { createAuthenticatedFetch } from "../util/auth/authFetch";
 
 // TODO: MCP 서버 주소를 환경변수 / 설정에서 로드
-const MCP_SERVER_URL = "http://localhost:3100";
+const MCP_SERVER_URL = import.meta.env.VITE_MCP_SERVER_URL;
 
 /**
  * MCP 클라이언트 — 브라우저에서 MCP 서버와 Streamable HTTP로 통신한다.
@@ -18,63 +22,104 @@ const MCP_SERVER_URL = "http://localhost:3100";
  * TODO: 초기화 핸드셰이크 (initialize → initialized)
  * TODO: 재연결 & 에러 복구 로직
  */
+
 export class McpClient {
   private baseUrl: string;
-  // TODO: 세션 관리 구현 시 활성화
-  public sessionId: string | null = null;
+  private client: Client | null = null;
+  private transport: StreamableHTTPClientTransport | null = null;
+  private fetchFn: typeof fetch;
 
-  constructor(baseUrl: string = MCP_SERVER_URL) {
-    this.baseUrl = baseUrl;
+  constructor(opts: { baseUrl?: string, getAccessToken: AccessTokenProvider }) {
+    this.baseUrl = opts.baseUrl ?? MCP_SERVER_URL;
+    this.fetchFn = createAuthenticatedFetch(opts.getAccessToken);
+  }
+
+  /** 세션 아이디 : transport가 내부적으로 관리 */
+    get sessionId(): string | null {
+    return this.transport?.sessionId ?? null;
   }
 
   /**
-   * MCP 서버와 초기화 핸드셰이크를 수행한다.
+   * MCP 서버와 초기화 핸드셰이크 수행
    *
-   * TODO: initialize 요청 전송 → 서버 capabilities 수신
-   * TODO: initialized 알림 전송
+   * initialize -> initialized handshake
    */
   async connect(): Promise<void> {
-    // TODO: POST /mcp — initialize 요청
-    // TODO: 응답에서 sessionId 추출 & 저장
-    // TODO: initialized 알림 전송
+    if (this.client) return;
     console.log("[McpClient] connecting to", this.baseUrl);
+
+    this.transport = new StreamableHTTPClientTransport(new URL(this.baseUrl), {
+      fetch: this.fetchFn, // 매 요청에 토큰 헤더 자동 입력
+    });
+
+    this.client = new Client(
+      { name: "hscan-healthhub-chatbot", version: "0.1.0" },
+      { capabilities: {} },
+    );
+
+    await this.client.connect(this.transport);
+    console.log("[McpClient] connected. sessionId =", this.sessionId);
   }
 
   /**
+   * tools/list
    * MCP 서버에서 사용 가능한 tool 목록을 가져온다.
-   *
-   * TODO: tools/list 요청 구현
    */
   async listTools(): Promise<McpToolDefinition[]> {
-    // TODO: POST /mcp — { method: "tools/list" }
-    // TODO: 응답 파싱하여 McpToolDefinition[] 반환
-    console.log("[McpClient] listing tools");
-    return [];
+    if (!this.client) await this.connect();
+
+    const all: McpToolDefinition[] = [];
+    let cursor: string | undefined; // cursor 페이지네이션 (sdk 프로토콜 준수)
+    
+
+    do {
+      const result = await this.client!.listTools(
+        cursor ? { cursor } : undefined
+      );
+      all.push(...(result.tools as McpToolDefinition[]));
+      cursor = result.nextCursor;
+    } while (cursor);
+
+    console.log(`[McpClient] listed ${all.length} tools`);
+    return all;
   }
 
   /**
+   * tools/call
    * MCP 서버의 tool을 호출한다.
    *
-   * TODO: tools/call 요청 구현
-   * TODO: 에러 응답 처리 (isError 플래그)
+   * 에러 - 프로토콜 에러(JSON-RPC error) : SDK가 throw함
+   *     - 도구 실행 에러 (isError = true): 정상적으로 결과 반환됨, LLM 해석 필요
    */
   async callTool(request: McpCallToolRequest): Promise<McpCallToolResponse> {
-    // TODO: POST /mcp — { method: "tools/call", params: { name, arguments } }
+    if (!this.client) await this.connect();
+
     console.log("[McpClient] calling tool:", request.toolName, request.arguments);
 
-    // placeholder
+    const result = await this.client!.callTool({
+      name: request.toolName,
+      arguments: request.arguments ?? {},
+    });
+
     return {
-      content: { message: `[TODO] ${request.toolName} 실행 결과` },
-      isError: false,
+      content: result.structuredContent ?? result.content,
+      isError: result.isError,
     };
   }
 
   /**
-   * 세션을 종료한다.
+   * 세션 종료 - transport가 DELETE + Mcp-Session-Id 전송
    */
   async disconnect(): Promise<void> {
-    // TODO: 세션 정리 (DELETE 또는 close 알림)
-    this.sessionId = null;
-    console.log("[McpClient] disconnected");
+    if (!this.client) return;
+    try {
+      await this.client.close();
+    } catch (e) {
+      console.warn("[McpClient] disconnect error:", e);
+    } finally {
+      this.client = null;
+      this.transport = null;
+      console.log("[McpClient] disconnected");
+    }
   }
 }

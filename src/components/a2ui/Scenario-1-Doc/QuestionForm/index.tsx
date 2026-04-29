@@ -1,24 +1,20 @@
 import { useEffect, useState } from "react";
 import styles from "./QuestionForm.module.css";
+import z from "zod";
+import { QuestionSchema } from "../../../../core/util/types/a2uiSchema";
 
-interface QuestionFormItem {
-  question: string;
-  hasInput: boolean;
-  placeholder?: string;
-}
+type QuestionFormItem = z.infer<typeof QuestionSchema>;
 
-interface QuestionFormSubmitPayload {
+export interface QuestionResponse {
   selectedQuestions: Array<{
-    question: string;
-    hasInput: boolean;
-    placeholder?: string;
+    item: QuestionFormItem
     value: string;
   }>;
 }
 
 interface QuestionFormProps {
   questions: QuestionFormItem[];
-  onSubmit?: (payload: QuestionFormSubmitPayload) => void;
+  onSubmit: (payload: QuestionResponse) => void;
 }
 
 const fallbackQuestions: QuestionFormItem[] = [
@@ -134,10 +130,9 @@ const QuestionForm = ({
           className={styles.submitButton}
           type="button"
           onClick={() =>
-            onSubmit?.({
-              selectedQuestions: items
-                .map((item, index) => ({
-                  ...item,
+            onSubmit({
+              selectedQuestions: items.map((item, index) => ({
+                  item,
                   value: inputValues[index],
                 }))
                 .filter((_, index) => checkedItems[index]),
