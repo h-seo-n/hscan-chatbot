@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Case } from "../../../../../core/util/types/caseTypes";
+import type { Case } from "../../../../core/util/types/caseTypes";
+import ImageCard from "../../Scenario-1-Doc/ImageList/ImageCard";
 import styles from "./DownloadImageList.module.css";
 
 export type DownloadImageListItem = Case;
@@ -13,44 +14,114 @@ interface DownloadImageListProps {
 
 const fallbackCases: DownloadImageListItem[] = [
   {
-    id: "video-1",
-    title: "영상 이름",
-    hospital: "촬영 병원",
-    capturedAt: "YYYY. MM. DD 촬영",
-    bodyPart: "촬영 부위",
-    modality: "modality",
+    caseId: "video-1",
+    patientId: "P001",
+    birthDate: "19900101",
+    patientName: "테스트^환자1",
+    patientSex: "M",
+    studyDate: "20260101",
+    accessionNumber: null,
+    studyInstanceUID: "1.2.3.4.5.1",
+    studyDescription: "영상 이름",
+    modality: "CT",
+    institutionName: "촬영 병원",
+    imageHash: {},
+    bodyPart: ["촬영 부위"],
+    series: [],
+    createdAt: null,
+    userId: "user1",
+    requestedDate: "2026-01-01T00:00:00Z",
+    acceptedDate: "2026-01-01T00:00:00Z",
+    locked: false,
+    contentIds: [],
   },
   {
-    id: "video-2",
-    title: "영상 이름",
-    hospital: "촬영 병원",
-    capturedAt: "YYYY. MM. DD 촬영",
-    bodyPart: "촬영 부위",
-    modality: "modality",
+    caseId: "video-2",
+    patientId: "P002",
+    birthDate: "19900102",
+    patientName: "테스트^환자2",
+    patientSex: "F",
+    studyDate: "20260102",
+    accessionNumber: null,
+    studyInstanceUID: "1.2.3.4.5.2",
+    studyDescription: "영상 이름",
+    modality: "MR",
+    institutionName: "촬영 병원",
+    imageHash: {},
+    bodyPart: ["촬영 부위"],
+    series: [],
+    createdAt: null,
+    userId: "user1",
+    requestedDate: "2026-01-02T00:00:00Z",
+    acceptedDate: "2026-01-02T00:00:00Z",
+    locked: false,
+    contentIds: [],
   },
   {
-    id: "video-3",
-    title: "영상 이름",
-    hospital: "촬영 병원",
-    capturedAt: "YYYY. MM. DD 촬영",
-    bodyPart: "촬영 부위",
-    modality: "modality",
+    caseId: "video-3",
+    patientId: "P003",
+    birthDate: "19900103",
+    patientName: "테스트^환자3",
+    patientSex: "O",
+    studyDate: "20260103",
+    accessionNumber: null,
+    studyInstanceUID: "1.2.3.4.5.3",
+    studyDescription: "영상 이름",
+    modality: "US",
+    institutionName: "촬영 병원",
+    imageHash: {},
+    bodyPart: ["촬영 부위"],
+    series: [],
+    createdAt: null,
+    userId: "user1",
+    requestedDate: "2026-01-03T00:00:00Z",
+    acceptedDate: "2026-01-03T00:00:00Z",
+    locked: false,
+    contentIds: [],
   },
-    {
-    id: "video-3",
-    title: "영상 이름",
-    hospital: "촬영 병원",
-    capturedAt: "YYYY. MM. DD 촬영",
-    bodyPart: "촬영 부위",
-    modality: "modality",
+  {
+    caseId: "video-4",
+    patientId: "P004",
+    birthDate: "19900104",
+    patientName: "테스트^환자4",
+    patientSex: "M",
+    studyDate: "20260104",
+    accessionNumber: null,
+    studyInstanceUID: "1.2.3.4.5.4",
+    studyDescription: "영상 이름",
+    modality: "CT",
+    institutionName: "촬영 병원",
+    imageHash: {},
+    bodyPart: ["촬영 부위"],
+    series: [],
+    createdAt: null,
+    userId: "user1",
+    requestedDate: "2026-01-04T00:00:00Z",
+    acceptedDate: "2026-01-04T00:00:00Z",
+    locked: false,
+    contentIds: [],
   },
-    {
-    id: "video-3",
-    title: "영상 이름",
-    hospital: "촬영 병원",
-    capturedAt: "YYYY. MM. DD 촬영",
-    bodyPart: "촬영 부위",
-    modality: "modality",
+  {
+    caseId: "video-5",
+    patientId: "P005",
+    birthDate: "19900105",
+    patientName: "테스트^환자5",
+    patientSex: "F",
+    studyDate: "20260105",
+    accessionNumber: null,
+    studyInstanceUID: "1.2.3.4.5.5",
+    studyDescription: "영상 이름",
+    modality: "MR",
+    institutionName: "촬영 병원",
+    imageHash: {},
+    bodyPart: ["촬영 부위"],
+    series: [],
+    createdAt: null,
+    userId: "user1",
+    requestedDate: "2026-01-05T00:00:00Z",
+    acceptedDate: "2026-01-05T00:00:00Z",
+    locked: false,
+    contentIds: [],
   },
 ];
 
@@ -68,7 +139,7 @@ export default function DownloadImageList({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
   const thumbRef = useRef<HTMLSpanElement>(null);
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number | null>(null);
 
   const buttonLabel = submitLabel ?? "선택한 영상들 다운로드";
 
@@ -92,7 +163,7 @@ export default function DownloadImageList({
   };
 
   useEffect(() => {
-    const itemIds = new Set(items.map((item) => item.id));
+    const itemIds = new Set(items.map((item) => item.caseId));
 
     setSelectedIds((prev) => prev.filter((id) => itemIds.has(id)));
     handleScroll();
@@ -111,11 +182,11 @@ export default function DownloadImageList({
     };
   }, []);
 
-  const handleSelect = (imageId: string) => {
+  const handleSelect = (caseId: string) => {
     setSelectedIds((prev) =>
-      prev.includes(imageId)
-        ? prev.filter((id) => id !== imageId)
-        : [...prev, imageId],
+      prev.includes(caseId)
+        ? prev.filter((id) => id !== caseId)
+        : [...prev, caseId],
     );
   };
 
@@ -133,50 +204,24 @@ export default function DownloadImageList({
         <div className={styles.listWrap}>
           <div className={styles.list} ref={listRef}>
             {items.map((item) => {
-              const isSelected = selectedIds.includes(item.id);
+              const isSelected = selectedIds.includes(item.caseId);
+              const bodyPartLabel = item.bodyPart.filter(Boolean).join(", ") || "-";
+              const thumbnailId = item.contentIds[0];
 
               return (
-                <button
-                  aria-pressed={isSelected}
-                  className={`${styles.card} ${isSelected ? styles.selected : ""}`}
-                  key={item.id}
-                  onClick={() => handleSelect(item.id)}
-                  type="button"
-                >
-                  <span
-                    aria-hidden="true"
-                    className={`${styles.checkbox} ${isSelected ? styles.checked : ""}`}
-                  >
-                    {isSelected && <span className={styles.checkmark} />}
-                  </span>
-
-                  <span className={styles.thumbnail}>
-                    {item.thumbnailUrl ? (
-                      <img
-                        alt={`${item.title} 썸네일`}
-                        src={item.thumbnailUrl}
-                      />
-                    ) : (
-                      <span className={styles.thumbnailLabel}>영상 이미지</span>
-                    )}
-                  </span>
-
-                  <span className={styles.details}>
-                    <span className={styles.titleRow}>
-                      <span className={styles.title}>{item.title}</span>
-                      <span className={styles.separator}>|</span>
-                      <span className={styles.hospital}>{item.hospital}</span>
-                    </span>
-                    <span className={styles.metaRow}>
-                      <span className={styles.meta}>{item.bodyPart}</span>
-                      <span className={styles.separator}>|</span>
-                      <span className={styles.meta}>{item.modality}</span>
-                    </span>
-                    <span className={styles.date}>{item.capturedAt}</span>
-                  </span>
-
-                  <span aria-hidden="true" className={styles.chevron} />
-                </button>
+                <ImageCard
+                  key={item.caseId}
+                  isSelectable={true}
+                  isSelected={isSelected}
+                  bodyPartLabel={bodyPartLabel}
+                  thumbnailId={thumbnailId}
+                  onSelect={handleSelect}
+                  caseId={item.caseId}
+                  studyDescription={item.studyDescription}
+                  institutionName={item.institutionName}
+                  modality={item.modality}
+                  studyDate={item.studyDate}
+                />
               );
             })}
           </div>
