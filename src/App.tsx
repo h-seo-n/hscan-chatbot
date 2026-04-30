@@ -154,8 +154,8 @@ function App() {
 
   return (
     <div>
-        <HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction} handleAbort={handleAbort}/>
-	    {/* <QuestionForm questions={[]} />
+       <HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction} handleAbort={handleAbort}/>
+	     {/* <QuestionForm questions={[]} />
       <ImageList 
         onSelect={(caseId) => handleA2UIAction("select-images", caseId)}
         onSubmit={() => handleA2UIAction("submit-images", null)}
