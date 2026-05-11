@@ -8,6 +8,7 @@ export interface Hospital {
 
 interface HospitalListProps {
   HospitalList?: Hospital[];
+  onSubmit?: (hospital: Hospital) => void;
 }
 
 const fallbackHospitalList: Hospital[] = [
@@ -23,6 +24,7 @@ const fallbackHospitalList: Hospital[] = [
 
 export default function HospitalListComponent({
   HospitalList,
+  onSubmit,
 }: HospitalListProps) {
   const hospitals = useMemo(
     () =>
@@ -35,6 +37,7 @@ export default function HospitalListComponent({
   const [selectedHospitalId, setSelectedHospitalId] = useState("");
 
   const hasSelectedHospital = selectedHospitalId.length > 0;
+  const selectedHospital = hospitals.find((hospital) => hospital.id === selectedHospitalId);
 
   return (
     <div className={styles.container}>
@@ -63,6 +66,11 @@ export default function HospitalListComponent({
       <button
         className={styles.submitButton}
         disabled={!hasSelectedHospital}
+        onClick={() => {
+          if (selectedHospital) {
+            onSubmit?.(selectedHospital);
+          }
+        }}
         type="button"
       >
         선택하기

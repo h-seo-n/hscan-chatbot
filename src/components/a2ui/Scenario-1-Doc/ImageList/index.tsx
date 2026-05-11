@@ -18,7 +18,7 @@ export default function ImageList({ images, submitLabel, onSelect, onSubmit, onN
   const selectedIds = selectedCases.map((c) => c.caseId);
   // 실제로 ImageList에서 표시하는 영상 : prop으로 전달되는 영상목록 우선, 없을 경우 mock 데이터
   const displayingCases: Case[] = images ?? mockCases;
-  const buttonLabel = submitLabel ?? `${selectedIds}건 선택하기`;
+  const buttonLabel = submitLabel ?? `${selectedIds.length}건 선택하기`;
 
   return (
     <div className={styles.container}>
@@ -45,7 +45,7 @@ export default function ImageList({ images, submitLabel, onSelect, onSubmit, onN
             );
           })}
         </div>
-        <NextButton type="button" text={buttonLabel} canMoveOn={selectedIds.length === 0} onClick={onSubmit}/>
+        <NextButton type="button" text={buttonLabel} canMoveOn={selectedIds.length > 0} onClick={onSubmit}/>
         {onNotFound ? (
           <button
             className={styles.emptyStateButton}

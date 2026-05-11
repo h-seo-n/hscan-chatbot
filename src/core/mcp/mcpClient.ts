@@ -24,7 +24,7 @@ const MCP_SERVER_URL = import.meta.env.VITE_MCP_SERVER_URL;
  */
 
 export class McpClient {
-  private baseUrl: string;
+  private baseUrl: string | undefined;
   private client: Client | null = null;
   private transport: StreamableHTTPClientTransport | null = null;
   private fetchFn: typeof fetch;
@@ -46,6 +46,11 @@ export class McpClient {
    */
   async connect(): Promise<void> {
     if (this.client) return;
+
+    if (!this.baseUrl) {
+      throw new Error("VITE_MCP_SERVER_URL이 설정되지 않았습니다.");
+    }
+
     console.log("[McpClient] connecting to", this.baseUrl);
 
     this.transport = new StreamableHTTPClientTransport(new URL(this.baseUrl), {

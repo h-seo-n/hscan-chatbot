@@ -50,8 +50,15 @@ export class Orchestrator {
 
   /** 초기화: MCP 서버 연결 & tool 목록 로드 */
   async init(): Promise<void> {
-    await this.mcpClient.connect();
-    this.tools = await this.mcpClient.listTools();
+    try {
+      await this.mcpClient.connect();
+      this.tools = await this.mcpClient.listTools();
+    } catch (error) {
+      this.tools = [];
+      this.logger?.warn("MCP 서버 연결 실패 - 도구 없이 계속 진행", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
     this.logger?.debug("Orchestrator Initialized", {
       tools: this.tools.map((t) => t.name),
     });
@@ -64,7 +71,7 @@ export class Orchestrator {
       role: "user",
       content: userText,
       timestamp: Date.now(),
-      hidden: options?.hidden,
+      hidden: options?.hidden ?? true,
     });
   }
 
