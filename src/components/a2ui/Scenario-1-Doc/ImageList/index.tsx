@@ -45,7 +45,7 @@ export default function ImageList({ images, submitLabel, onSelect, onSubmit, onN
             );
           })}
         </div>
-        <NextButton type="button" text={buttonLabel} canMoveOn={selectedIds.length === 0} onClick={onSubmit}/>
+        <NextButton type="button" text={buttonLabel} canMoveOn={selectedIds.length !== 0} onClick={onSubmit}/>
         {onNotFound ? (
           <button
             className={styles.emptyStateButton}

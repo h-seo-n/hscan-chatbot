@@ -1,4 +1,4 @@
-import type { A2UIBlock } from "../../core/util/types/generalTypes";
+import type { A2UIBlock } from "../../core/util/types/a2uiSchema";
 
 // Scenario #1
 import ConsentForm from "./Scenario-1-Doc/ConsentForm";
@@ -17,7 +17,7 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
   switch (block.type) {
     case "show-doctor-video-consent-form":
       return (
-        <ConsentForm items={SHOW_DOCTOR_CONSENT_ITEMS} onConfirm={() => onAction("agree-show-doctor-consent", null)}/>
+        <ConsentForm items={SHOW_DOCTOR_CONSENT_ITEMS} onConfirm={() => onAction("show-doctor-video-consent-form", null)}/>
       );
 
     case "image-selector":
@@ -33,7 +33,7 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
     case "selected-images-list":
       return (
         <SelectedImages 
-          onRemove={(caseId) => onAction("remove-image", caseId)}
+          onRemove={(caseId) => onAction("deselect-image", caseId)}
           onNotFound={() => onAction("not-found", null)}
         />
       );

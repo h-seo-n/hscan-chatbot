@@ -105,13 +105,13 @@ export class Orchestrator {
           this.currentAbort.signal,
         );
 
-      if (iterationResult.toolCalls.length === 0) {
-        // tool_call 없으면 루프 종료
-        return;
-      }
+        if (iterationResult.toolCalls.length === 0) {
+          // tool_call 없으면 루프 종료
+          return;
+        }
       
-      // tool call 있음 : 실행 -> 결과를 store에 기록
-      // 다음 iteration에서 buildLLMMessages가 tool call 반영
+        // tool call 있음 : 실행 -> 결과를 store에 기록
+        // 다음 iteration에서 buildLLMMessages가 tool call 반영
         await this.executeToolCalls(iterationResult.toolCalls);
         loop += 1;
       }
@@ -208,12 +208,13 @@ export class Orchestrator {
         store.addMessage({
           id: generateId(),
           role: "tool",
-          content: 
+          content:
             typeof result.content === "string"
               ? result.content
               : JSON.stringify(result.content),
           toolResult: { toolCallId: tc.id, content: result.content },
           timestamp: Date.now(),
+          hidden: true,
         });
       } catch (e) {
         this.logger?.warn("Tool 실행 실패", {
@@ -232,6 +233,7 @@ export class Orchestrator {
             content: { error: true },
           },
           timestamp: Date.now(),
+          hidden: true,
         })
       }
     }

@@ -5,7 +5,6 @@ import styles from "./Header.module.css";
 
 const Header = () => {
     const { user, login, logout, isLoading } = useAuth();
-
     // const userInfo:string = JSON.stringify(user);
 
     return (
@@ -17,31 +16,34 @@ const Header = () => {
                 padding: "16px 24px",
             }}
         >
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <img src={logo} alt="Hscan logo with an 'Hh' shaped icon, and navy color" />
-        </div>
-        <div
-            style={({
-                display: "flex",
-                flexFlow: "row nowrap",
-                gap: "4px",
-            })}
-        >
-            <button
-                onClick={user ? logout : login}
-                className={`${styles.authBtn} ${styles.loginButton}`}
-                disabled={isLoading}
+            <div
+                onClick={() => window.location.reload()} 
+                style={{ display: "flex", alignItems: "center", gap: "6px" }}
             >
-                {user ? "로그아웃" : "로그인"}
-            </button>
-            {user && 
-            <span
-                className={`${styles.authBtn} ${styles.userInfoBtn}`}
+                <img src={logo} alt="Hscan logo with an 'Hh' shaped icon, and navy color" />
+            </div>
+            <div
+                style={({
+                    display: "flex",
+                    flexFlow: "row nowrap",
+                    gap: "4px",
+                })}
+            >
+                <button
+                    onClick={user ? logout : login}
+                    className={`${styles.authBtn} ${styles.loginButton}`}
+                    disabled={isLoading}
                 >
-                    {`${user.name}님`}
-            </span>
-            }
-        </div>
+                    {user ? "로그아웃" : "로그인"}
+                </button>
+                {user && 
+                <span
+                    className={`${styles.authBtn} ${styles.userInfoBtn}`}
+                    >
+                        {`${user.name}님`}
+                </span>
+                }
+            </div>
         </header>
     );
 };

@@ -28,7 +28,11 @@ export default function AuthCallback() {
   }
 
   if (isLoading) {
-    return <div style={{ padding: 40, textAlign: 'center' }}>로그인 처리 중...</div>;
+    return (
+    <div style={{ padding: 40, textAlign: 'center' }}>
+      <h2>로그인 처리 중...</h2>
+    </div>)
+    ;
   }
 
   return null;

@@ -99,7 +99,7 @@ function App() {
    * orchestrator.ts의 handleUserMessage() wrapper 
    * useCallback으로 re-render 최소화   
   */
-  const handleSendMessage = useCallback(async (text: string) => {
+  const handleSendMessage = useCallback(async (text: string):Promise<void> => {
     const orchestrator = orchestratorRef.current;
     if (!orchestrator) {
       appLogger.warn("Orchestrator가 아직 준비되지 않았습니다");
@@ -115,7 +115,6 @@ function App() {
   
   /**
    * 사용자가 출력 중단 시 handler
-   * -> TODO : handleAbort 다루는 중간 중단 버튼 필요
    */
   const handleAbort = useCallback(() => {
     orchestratorRef.current?.abort();
