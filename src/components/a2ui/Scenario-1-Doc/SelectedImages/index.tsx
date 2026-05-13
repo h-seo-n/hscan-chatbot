@@ -2,12 +2,6 @@ import { useCaseStore } from "../../../../core/util/caseStore";
 import ImageCard from "../ImageList/ImageCard";
 import styles from "./SelectedImages.module.css";
 
-/** "20260320" → "2026.03.20" */
-function formatStudyDate(raw: string): string {
-  if (raw.length !== 8) return raw;
-  return `${raw.slice(0, 4)}.${raw.slice(4, 6)}.${raw.slice(6, 8)}`;
-}
-
 interface SelectedImagesProps {
   onRemove: (caseId: string) => void;
   onNotFound: () => void;

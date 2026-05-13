@@ -1,4 +1,6 @@
-import type { A2UIBlock } from "../../core/util/types/generalTypes";
+import { useState } from "react";
+import type { A2UIBlock } from "../../core/util/types/a2uiSchema";
+import type { Case } from "../../core/util/types/caseTypes";
 
 // Scenario #1
 import ConsentForm from "./Scenario-1-Doc/ConsentForm";
@@ -6,11 +8,66 @@ import ImageList from "./Scenario-1-Doc/ImageList";
 import SelectedImages from "./Scenario-1-Doc/SelectedImages";
 import Pincode from "./Scenario-1-Doc/Pincode";
 import QuestionForm from "./Scenario-1-Doc/QuestionForm";
-import { SHOW_DOCTOR_CONSENT_ITEMS } from "../../core/util/constant";
+import { SEND_IMAGE_CONSENT_ITEMS, SHOW_DOCTOR_CONSENT_ITEMS } from "../../core/util/constant";
+
+// Scenario #2
+import AddressContactInfo from "./Scenario-2-CD/AddressContactInfo";
+import CDPurchaseCard from "./Scenario-2-CD/CDPurchaseCard";
+import DeliverInfoCard from "./Scenario-2-CD/CDPurchaseCard/DeliverInfoCard";
+import MedicalConsentForm from "./Scenario-2-CD/CDPurchaseCard/MedicalConsentForm";
+
+// Scenario #3
+import HospitalListComponent, { type Hospital } from "./Scenario-3-Hosp/HospitalList";
+import PurchaseImaging from "./Scenario-3-Hosp/PurchaseImaging";
+import PurchaseTable, { type PurchaseTableProps } from "./Scenario-3-Hosp/PurchaseImaging/PurchaseTable";
+
+// Scenario #7
+import DownloadImageList from "./Scenario-7-Down/DownloadImageList";
+import DetailModal from "./Scenario-7-Down/DetailModal";
 
 interface A2UIRendererProps {
   block: A2UIBlock;
   onAction: (action: string, payload: unknown) => void;
+}
+
+function MedicalConsentFormBlock({
+  onAction,
+}: {
+  onAction: A2UIRendererProps["onAction"];
+}) {
+  const [checked, setChecked] = useState(false);
+
+  return (
+    <MedicalConsentForm
+      checked={checked}
+      onCheckedChange={(nextChecked) => {
+        setChecked(nextChecked);
+        onAction("toggle-medical-consent", nextChecked);
+      }}
+    />
+  );
+}
+
+function ClosableDetailModal({
+  series,
+  onAction,
+}: {
+  series?: Case["series"];
+  onAction: A2UIRendererProps["onAction"];
+}) {
+  const [open, setOpen] = useState(true);
+
+  if (!open) return null;
+
+  return (
+    <DetailModal
+      series={series}
+      onClose={() => {
+        setOpen(false);
+        onAction("close-detail-modal", null);
+      }}
+    />
+  );
 }
 
 export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
@@ -18,6 +75,11 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
     case "show-doctor-video-consent-form":
       return (
         <ConsentForm items={SHOW_DOCTOR_CONSENT_ITEMS} onConfirm={() => onAction("agree-show-doctor-consent", null)}/>
+      );
+
+    case "send-image-consent-form":
+      return (
+        <ConsentForm items={SEND_IMAGE_CONSENT_ITEMS} onConfirm={() => onAction("agree-send-image-consent", null)}/>
       );
 
     case "image-selector":
@@ -33,7 +95,7 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
     case "selected-images-list":
       return (
         <SelectedImages 
-          onRemove={(caseId) => onAction("remove-image", caseId)}
+          onRemove={(caseId) => onAction("deselect-image", caseId)}
           onNotFound={() => onAction("not-found", null)}
         />
       );
@@ -54,8 +116,86 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
         />
       );
 
+    case "address-contact-input":
+      return (
+        <AddressContactInfo
+          initialValues={block.props.initialValues}
+          onSubmit={(address, addressDetail, name, tel) =>
+            onAction("submit-address-contact", { address, addressDetail, name, tel })
+          }
+        />
+      );
+
+    case "medical-consent-form":
+      return <MedicalConsentFormBlock onAction={onAction} />;
+
+    case "delivery-info-card":
+      return (
+        <DeliverInfoCard
+          address={block.props.address}
+          addressDetail={block.props.addressDetail}
+          name={block.props.name}
+          tel={block.props.tel}
+          registeredMailCost={block.props.registeredMailCost}
+          onChange={() => onAction("change-delivery-info", null)}
+        />
+      );
+
+    case "cd-purchase-card":
+      return (
+        <CDPurchaseCard
+          address={block.props.address}
+          addressDetail={block.props.addressDetail}
+          name={block.props.name}
+          tel={block.props.tel}
+          registeredMailCost={block.props.registeredMailCost}
+          onPayment={() => onAction("pay-cd-purchase", null)}
+        />
+      );
+
+    case "hospital-selector":
+      return (
+        <HospitalListComponent
+          HospitalList={block.props.hospitals as Hospital[] | undefined}
+          onSubmit={(hospital) => onAction("select-hospital", hospital)}
+        />
+      );
+
+    case "purchase-imaging":
+      return (
+        <PurchaseImaging
+          hospitalName={block.props.hospitalName}
+          selectedVideoCount={block.props.selectedVideoCount}
+          issueCost={block.props.issueCost}
+          agencyFee={block.props.agencyFee}
+          vat={block.props.vat}
+          onPayment={() => onAction("pay-purchase-imaging", block.props)}
+        />
+      );
+
+    case "purchase-table":
+      return <PurchaseTable {...(block.props as PurchaseTableProps)} />;
+
+    case "download-selector":
+      return (
+        <DownloadImageList
+          cases={block.props.cases as Case[] | undefined}
+          submitLabel={block.props.submitLabel}
+          onSelect={(imageIds) => onAction("download-images", imageIds)}
+          onNotFound={() => onAction("not-found", null)}
+        />
+      );
+
+    case "detail-modal":
+      return (
+        <ClosableDetailModal
+          series={block.props.series as Case["series"] | undefined}
+          onAction={onAction}
+        />
+      );
+
     default:
-      console.warn("[A2UIRenderer] 알 수 없는 A2UI 타입:", block.type);
+      console.warn("[A2UIRenderer] 알 수 없는 A2UI 타입:", (block as { type: string }).type);
       return (
         <div className="a2ui-fallback">
           지원하지 않는 UI 형식입니다.

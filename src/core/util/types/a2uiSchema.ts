@@ -18,6 +18,11 @@ const ShowDoctorVideoConsentFormBlock = z.object({
     props: EmptyProps,
 });
 
+const SendImageConsentFormBlock = z.object({
+    type: z.literal("send-image-consent-form"),
+    props: EmptyProps,
+});
+
 const ImageSelectorBlock = z.object({
     type: z.literal("image-selector"),
     props: EmptyProps,
@@ -42,33 +47,127 @@ const QuestionFormBlock = z.object({
     }).strict(),
 })
 
-/* Scenario #2 - 이미 있는 영상 등록 (TODO: props 확정 후 채우기) */
-// prop -> schema -> renderer case 순서대로 작업!
+const PriceValueSchema = z.union([z.number(), z.string()]);
+
+const HospitalSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+}).strict();
+
+const SeriesSchema = z.object({
+  seriesNumber: z.string().nullable().default(null),
+  seriesInstanceUID: z.string().min(1),
+  seriesDescription: z.string().nullable().default(null),
+  images: z.array(z.string()).default([]),
+}).strict();
+
+const CaseSchema = z.object({
+  caseId: z.string().min(1),
+  patientId: z.string().default(""),
+  birthDate: z.string().default(""),
+  patientName: z.string().default(""),
+  patientSex: z.enum(["M", "F", "O"]).default("O"),
+  studyDate: z.string().default(""),
+  accessionNumber: z.string().nullable().default(null),
+  studyInstanceUID: z.string().default(""),
+  studyDescription: z.string().default("영상 이름"),
+  modality: z.string().default(""),
+  institutionName: z.string().default(""),
+  imageHash: z.record(z.string(), z.unknown()).default({}),
+  bodyPart: z.array(z.string()).default([]),
+  series: z.array(SeriesSchema).default([]),
+  createdAt: z.string().nullable().default(null),
+  userId: z.string().default(""),
+  requestedDate: z.string().default(""),
+  acceptedDate: z.string().default(""),
+  locked: z.boolean().default(false),
+  contentIds: z.array(z.string()).default([]),
+}).strict();
+
+/* Scenario #2 - CD 등기우편 발송 */
 const AddressContactInputBlock = z.object({
   type: z.literal("address-contact-input"),
-  props: z.record(z.string(), z.unknown()),  // placeholder
+  props: z.object({
+    initialValues: z.object({
+      address: z.string().optional(),
+      addressDetail: z.string().optional(),
+      name: z.string().optional(),
+      tel: z.string().optional(),
+    }).strict().optional(),
+  }).strict(),
 });
 
 const MedicalConsentFormBlock = z.object({
   type: z.literal("medical-consent-form"),
-  props: z.record(z.string(), z.unknown()),
+  props: EmptyProps,
 });
 
 const DeliveryInfoCardBlock = z.object({
   type: z.literal("delivery-info-card"),
-  props: z.record(z.string(), z.unknown()),
+  props: z.object({
+    address: z.string().optional(),
+    addressDetail: z.string().optional(),
+    name: z.string().optional(),
+    tel: z.string().optional(),
+    registeredMailCost: PriceValueSchema.optional(),
+  }).strict(),
 });
 
 const CdPurchaseCardBlock = z.object({
   type: z.literal("cd-purchase-card"),
-  props: z.record(z.string(), z.unknown()),
+  props: z.object({
+    address: z.string().optional(),
+    addressDetail: z.string().optional(),
+    name: z.string().optional(),
+    tel: z.string().optional(),
+    registeredMailCost: PriceValueSchema.optional(),
+  }).strict(),
 });
 
-/* Scenario #7 - 영상 목록 조회, 다운로드 (TODO) */
+/* Scenario #3 - 제휴 병원으로 영상 보내기 */
+const HospitalSelectorBlock = z.object({
+  type: z.literal("hospital-selector"),
+  props: z.object({
+    hospitals: z.array(HospitalSchema).optional(),
+  }).strict(),
+});
+
+const PurchaseImagingBlock = z.object({
+  type: z.literal("purchase-imaging"),
+  props: z.object({
+    hospitalName: z.string().optional(),
+    selectedVideoCount: PriceValueSchema.optional(),
+    issueCost: PriceValueSchema.optional(),
+    agencyFee: PriceValueSchema.optional(),
+    vat: PriceValueSchema.optional(),
+  }).strict(),
+});
+
+const PurchaseTableBlock = z.object({
+  type: z.literal("purchase-table"),
+  props: z.object({
+    selectedVideoCount: PriceValueSchema,
+    issueCost: PriceValueSchema,
+    agencyFee: PriceValueSchema,
+    vat: PriceValueSchema,
+  }).strict(),
+});
+
+/* Scenario #7 - 영상 목록 조회, 다운로드 */
 
 const DownloadSelectorBlock = z.object({
   type: z.literal("download-selector"),
-  props: z.record(z.string(), z.unknown()),
+  props: z.object({
+    cases: z.array(CaseSchema).optional(),
+    submitLabel: z.string().optional(),
+  }).strict(),
+});
+
+const DetailModalBlock = z.object({
+  type: z.literal("detail-modal"),
+  props: z.object({
+    series: z.array(SeriesSchema).optional(),
+  }).strict(),
 });
 
 
@@ -76,6 +175,7 @@ const DownloadSelectorBlock = z.object({
 export const A2UIBlockSchema = z.discriminatedUnion("type", [
   // Scenario #1
   ShowDoctorVideoConsentFormBlock,
+  SendImageConsentFormBlock,
   ImageSelectorBlock,
   SelectedImagesListBlock,
   PincodeBlock,
@@ -85,8 +185,13 @@ export const A2UIBlockSchema = z.discriminatedUnion("type", [
   MedicalConsentFormBlock,
   DeliveryInfoCardBlock,
   CdPurchaseCardBlock,
+  // Scenario #3
+  HospitalSelectorBlock,
+  PurchaseImagingBlock,
+  PurchaseTableBlock,
   // Scenario #7
   DownloadSelectorBlock,
+  DetailModalBlock,
 ]);
 
 
