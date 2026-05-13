@@ -153,8 +153,8 @@ function App() {
 
   return (
     <div>
-        <HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction} handleAbort={handleAbort}/>
-	    {/* <QuestionForm questions={[]} />
+       <HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction} handleAbort={handleAbort}/>
+	     {/* <QuestionForm questions={[]} />
       <ImageList 
         onSelect={(caseId) => handleA2UIAction("select-images", caseId)}
         onSubmit={() => handleA2UIAction("submit-images", null)}
@@ -165,9 +165,11 @@ function App() {
         onNotFound={() => handleA2UIAction("not-found", null)}
       />
       <ConsentForm/>
-      <Pincode code={"000000"} onRefreshCode={() => handleA2UIAction("refresh-code)", null)}/>
-      <AddressContactInfo />
-      <DeliverInfoCard/> */}
+      <Pincode code={pincode} onRefreshCode={handleRefreshCode}/>
+      <AddressContactInfo/>
+      <CDPurchaseCard/>
+      <HospitalList/>
+      <PurchaseImaging/>*/}
     </div>
   );}
 

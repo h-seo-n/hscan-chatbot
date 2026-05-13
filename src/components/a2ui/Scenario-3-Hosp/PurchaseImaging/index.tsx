@@ -8,8 +8,9 @@ import PurchaseTable, {
 } from "./PurchaseTable";
 import styles from "./PurchaseImaging.module.css";
 
-interface PurchaseImagingProps extends PurchaseTableProps {
+interface PurchaseImagingProps extends Partial<PurchaseTableProps> {
   hospitalName?: string;
+  onPayment?: () => void;
 }
 
 const fallbackHospitalName = "서울병원";
@@ -20,6 +21,7 @@ export default function PurchaseImaging({
   issueCost = fallbackPurchaseTableProps.issueCost,
   agencyFee = fallbackPurchaseTableProps.agencyFee,
   vat = fallbackPurchaseTableProps.vat,
+  onPayment,
 }: PurchaseImagingProps = {}) {
   const [isConsentChecked, setIsConsentChecked] = useState(false);
   const purchaseTableProps = {
@@ -37,14 +39,13 @@ export default function PurchaseImaging({
       <PurchaseTable {...purchaseTableProps} />
 
       <ConsentForm
-        onChange={(_, allChecked) => {
-          setIsConsentChecked(allChecked);
-        }}
+        onConfirm={() => setIsConsentChecked(true)}
       />
 
       <button
         className={styles.paymentButton}
         disabled={!isConsentChecked}
+        onClick={onPayment}
         type="button"
       >
         {formatWon(totalCost)} 결제하기
