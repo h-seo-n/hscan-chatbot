@@ -1,10 +1,6 @@
-<<<<<<< HEAD
-import type { A2UIBlock } from "../../core/util/types/a2uiSchema";
-=======
 import { useState } from "react";
 import type { A2UIBlock } from "../../core/util/types/a2uiSchema";
 import type { Case } from "../../core/util/types/caseTypes";
->>>>>>> 5fb4f9e4bd25553f5a46e2a63bfc111871f309a6
 
 // Scenario #1
 import ConsentForm from "./Scenario-1-Doc/ConsentForm";

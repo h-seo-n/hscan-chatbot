@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CaseSchema, SeriesSchema } from "./caseTypes";
 
 // prop이 없는 A2UI 블록 : 빈 객체만 허용
 const EmptyProps = z.object({}).strict();
@@ -52,36 +53,6 @@ const PriceValueSchema = z.union([z.number(), z.string()]);
 const HospitalSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-}).strict();
-
-const SeriesSchema = z.object({
-  seriesNumber: z.string().nullable().default(null),
-  seriesInstanceUID: z.string().min(1),
-  seriesDescription: z.string().nullable().default(null),
-  images: z.array(z.string()).default([]),
-}).strict();
-
-const CaseSchema = z.object({
-  caseId: z.string().min(1),
-  patientId: z.string().default(""),
-  birthDate: z.string().default(""),
-  patientName: z.string().default(""),
-  patientSex: z.enum(["M", "F", "O"]).default("O"),
-  studyDate: z.string().default(""),
-  accessionNumber: z.string().nullable().default(null),
-  studyInstanceUID: z.string().default(""),
-  studyDescription: z.string().default("영상 이름"),
-  modality: z.string().default(""),
-  institutionName: z.string().default(""),
-  imageHash: z.record(z.string(), z.unknown()).default({}),
-  bodyPart: z.array(z.string()).default([]),
-  series: z.array(SeriesSchema).default([]),
-  createdAt: z.string().nullable().default(null),
-  userId: z.string().default(""),
-  requestedDate: z.string().default(""),
-  acceptedDate: z.string().default(""),
-  locked: z.boolean().default(false),
-  contentIds: z.array(z.string()).default([]),
 }).strict();
 
 /* Scenario #2 - CD 등기우편 발송 */
