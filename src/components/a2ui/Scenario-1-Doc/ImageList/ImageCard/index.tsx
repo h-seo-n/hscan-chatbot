@@ -34,7 +34,7 @@ function formatStudyDate(raw: string): string {
             {isSelected && <span className={styles.checkmark} />}
         </span> 
         }
-            <span className={styles.thumbnail}>
+            <div className={styles.thumbnail}>
                 {thumbnailId ? (
                 <img
                     alt={`${studyDescription} 썸네일`}
@@ -43,21 +43,21 @@ function formatStudyDate(raw: string): string {
                 ) : (
                 <span className={styles.thumbnailLabel}>영상 이미지</span>
                 )}
-            </span>
+            </div>
 
-            <span className={styles.details}>
-                <span className={styles.titleRow}>
+            <div className={styles.details}>
+                <div className={styles.titleRow}>
                     <span className={styles.title}>{studyDescription || "-"}</span>
                     <span className={styles.separator}>|</span>
                     <span className={styles.hospital}>{institutionName || "-"}</span>
-                </span>
-                <span className={styles.metaRow}>
+                </div>
+                <div className={styles.metaRow}>
                     <span className={styles.meta}>{bodyPartLabel}</span>
                     <span className={styles.separator}>|</span>
                     <span className={styles.meta}>{modality}</span>
-                </span>
-                <span className={styles.date}>{`${formatStudyDate(studyDate)} 촬영`}</span>
-            </span>
+                </div>
+                <div className={styles.date}>{`${formatStudyDate(studyDate)} 촬영`}</div>
+            </div>
     </button>
     )
 }

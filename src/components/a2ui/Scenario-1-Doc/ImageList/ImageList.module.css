@@ -1,10 +1,9 @@
 .container {
-  width: 90%;
+  width: 100%;
   background: #ffffff;
   border: 1px solid #d6d6d6;
   border-radius: 15px;
   box-sizing: border-box;
-  overflow: hidden;
 }
 
 .content {
