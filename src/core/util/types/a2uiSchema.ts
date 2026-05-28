@@ -26,7 +26,9 @@ const SendImageConsentFormBlock = z.object({
 
 const ImageSelectorBlock = z.object({
     type: z.literal("image-selector"),
-    props: EmptyProps,
+    props: z.object({
+        cases: z.array(CaseSchema).optional(),
+    }).strict(),
 });
 
 const SelectedImagesListBlock = z.object({

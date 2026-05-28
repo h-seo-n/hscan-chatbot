@@ -84,7 +84,8 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
 
     case "image-selector":
       return (
-        <ImageList 
+        <ImageList
+          cases={block.props.cases as Case[] | undefined}
           onSelect={(caseId) => onAction("select-images", caseId)}
           onSubmit={() => onAction("submit-images", null)}
           onNotFound={() => onAction("not-found", null)}
