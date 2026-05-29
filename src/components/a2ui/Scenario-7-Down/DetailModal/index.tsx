@@ -2,6 +2,8 @@ import type { ChangeEvent, CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import type { Case } from "../../../../core/util/types/caseTypes";
+import { createAuthenticatedFetch } from "../../../../core/util/auth/authFetch";
+import { useAuth } from "../../../../core/util/auth/useAuth";
 import styles from "./DetailModal.module.css";
 
 interface DetailModalProps {
@@ -9,7 +11,7 @@ interface DetailModalProps {
   onClose?: () => void;
 }
 
-const IMAGE_BASE_URL = import.meta.env.HEALTHINFOHEALTHINFO_IMAGE_URL as string | undefined;
+const IMAGE_BASE_URL = import.meta.env.VITE_HEALTHINFO_API_URL as string | undefined;
 
 const fallbackCase: Case = {
   caseId: "fallback-case",
@@ -59,12 +61,34 @@ export default function DetailModal({
 }: DetailModalProps) {
   const [activeSeriesIndex, setActiveSeriesIndex] = useState(0);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [imageSrc, setImageSrc] = useState<string>("");
+  const { accessToken } = useAuth();
   const resolvedSeries = series?.length ? series : fallbackCase.series;
 
   const activeSeries = resolvedSeries[activeSeriesIndex];
   const images = useMemo(() => activeSeries?.images ?? [], [activeSeries]);
   const currentImageId = images[activeImageIndex];
-  const imageSrc = currentImageId && IMAGE_BASE_URL ? `${IMAGE_BASE_URL}${currentImageId}` : "";
+
+  useEffect(() => {
+    if (!currentImageId || !IMAGE_BASE_URL) {
+      setImageSrc("");
+      return;
+    }
+    const authFetch = createAuthenticatedFetch(() => accessToken);
+    let objectUrl: string | undefined;
+    let cancelled = false;
+    authFetch(`${IMAGE_BASE_URL}image/${currentImageId}`)
+      .then((res) => res.blob())
+      .then((blob) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setImageSrc(objectUrl);
+      });
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [currentImageId, accessToken]);
   const totalImages = images.length;
   const displayedImageNumber = totalImages > 0 ? activeImageIndex + 1 : 0;
   const sliderMax = Math.max(totalImages - 1, 0);

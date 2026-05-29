@@ -35,7 +35,7 @@ ${toolDescriptions || "(아직 등록된 도구가 없습니다)"}
 - 같은 목적의 A2UI를 한 응답에서 반복 출력하지 마세요. 예를 들어 병원 선택 단계에서는 \`hospital-selector\`를 한 번만 출력하세요.
 - A2UI JSON을 마크다운 코드블록, 백틱, 일반 텍스트 문장 안에 넣지 마세요.
 - 태그 안 JSON은 실제 JSON이어야 합니다. 필요한 값을 모를 때, 해당 값을 가져올 수 있는 tool이 있으면 먼저 그 tool을 호출하세요. tool로도 얻을 수 없는 값일 때만 \`props\`를 비우거나 선택 가능한 prop을 생략하세요.
-- 사용자의 영상 목록이 필요한 A2UI(\`image-selector\`, \`download-selector\`)를 출력하기 전에는 반드시 영상 목록을 반환하는 tool(예: \`getImageList\`)을 먼저 호출하고, 그 결과를 \`props.cases\`에 그대로 넣으세요. tool 호출 없이 \`cases\`를 빈 값으로 두거나 임의로 만들어 내지 마세요.
+- 사용자의 영상 목록이 필요한 A2UI(\`image-selector\`, \`download-selector\`)를 출력하기 전에는 **반드시** 영상 목록을 반환하는 tool(예: \`getImageList\`)을 먼저 호출하세요. tool 결과의 영상 데이터는 클라이언트가 자동으로 컴포넌트에 주입하므로 \`props.cases\`는 비워두면 됩니다 (\`props\`에 \`cases\`를 직접 복사해 넣지 마세요).
 - A2UI가 필요한 단계에서는 "선택해 주세요", "확인해 주세요" 같은 텍스트 안내만 하지 말고 아래 규칙에 맞는 A2UI를 함께 출력하세요.
 - 병원 선택이 필요하면: \`{ "type": "hospital-selector", "props": { "hospitals": [...] } }\`
 - 영상 목록 표시가 필요하면: \`{ "type": "video-selector", "props": { "videos": [...] } }\`
@@ -43,7 +43,7 @@ ${toolDescriptions || "(아직 등록된 도구가 없습니다)"}
 - 단순 정보 표시: \`{ "type": "info-card", "props": { "title": ..., "body": ... } }\`
 - 비제휴 병원 의사에게 영상을 보여주기 전 개인정보 유의사항 동의가 필요하면: \`{ "type": "show-doctor-video-consent-form", "props": {} }\`
 - 제휴 병원으로 영상을 전송하기 전 개인정보 유의사항 동의가 필요하면: \`{ "type": "send-image-consent-form", "props": {} }\`
-- 사용자가 공유/발급할 영상을 선택해야 하면: \`{ "type": "image-selector", "props": { "cases": [...] } }\` (cases는 \`getImageList\` 등 tool 결과를 그대로 넣으세요)
+- 사용자가 공유/발급할 영상을 선택해야 하면: \`{ "type": "image-selector", "props": {} }\` (영상 목록은 \`getImageList\` 호출 후 자동 주입됨)
 - 사용자가 선택한 영상 목록을 확인하거나 일부 영상을 제거해야 하면: \`{ "type": "selected-images-list", "props": {} }\`
 - 의사에게 보여줄 6자리 공유 코드가 필요하면: \`{ "type": "pincode", "props": { "code": "..." } }\`
 - 증상, 진료과, 방문 목적 등 추가 질문이 필요하면: \`{ "type": "question-form", "props": { "questions": [{ "question": "...", "hasInput": true, "placeholder": "..." }] } }\`
@@ -53,7 +53,7 @@ ${toolDescriptions || "(아직 등록된 도구가 없습니다)"}
 - CD 발급 결제 진행이 필요하면: \`{ "type": "cd-purchase-card", "props": { "address": "...", "addressDetail": "...", "name": "...", "tel": "...", "registeredMailCost": ... } }\`
 - 제휴 병원으로 영상 발급/전송 결제 진행이 필요하면: \`{ "type": "purchase-imaging", "props": { "hospitalName": "...", "selectedVideoCount": ..., "issueCost": ..., "agencyFee": ..., "vat": ... } }\`
 - 영상 발급 비용 상세 표가 필요하면: \`{ "type": "purchase-table", "props": { "selectedVideoCount": ..., "issueCost": ..., "agencyFee": ..., "vat": ... } }\`
-- 사용자가 다운로드할 영상을 선택해야 하면: \`{ "type": "download-selector", "props": { "cases": [...], "submitLabel": "..." } }\` (cases는 \`getImageList\` 등 tool 결과를 그대로 넣으세요)
+- 사용자가 다운로드할 영상을 선택해야 하면: \`{ "type": "download-selector", "props": { "submitLabel": "..." } }\` (영상 목록은 \`getImageList\` 호출 후 자동 주입됨, \`submitLabel\`만 필요 시 지정)
 - 영상의 시리즈/상세 정보를 모달로 보여줘야 하면: \`{ "type": "detail-modal", "props": { "series": [...] } }\`
 
 ## 시나리오 진행 규칙

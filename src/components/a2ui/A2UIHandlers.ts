@@ -149,12 +149,12 @@ export function createA2UIHandler(orchestrator: Orchestrator) {
         );
     };
 
-    const handleDownloadImages = (imageIds: string[]) => {
+    const handleDownloadImages = (imageIds: string[], /*fileType: "jpeg" | "dicom"*/) => {
         if (imageIds.length === 0) return;
 
         orchestrator.addHiddenMessage(`다운로드 선택 영상 목록: ${imageIds.join(", ")}`);
         orchestrator.handleUserMessage(
-            `${imageIds.length}건의 영상 다운로드가 완료되었습니다. 완료 안내만 하세요.`,
+            `downloadImage 툴을 호출하세요.`,
             { hidden: true },
         );
     };

@@ -14,22 +14,22 @@ const MODALITIES = [
 
 export const SeriesSchema = z.object({
   seriesNumber: z.string().nullable().default(null),
-  seriesInstanceUID: z.string().min(1),
+  seriesInstanceUID: z.string().default(""),
   seriesDescription: z.string().nullable().default(null),
   images: z.array(z.string()).default([]),
-}).strict();
+}).passthrough();
 
 export const CaseSchema = z.object({
   caseId: z.string().min(1),
   patientId: z.string().default(""),
   birthDate: z.string().default(""),
   patientName: z.string().default(""),
-  patientSex: z.enum(PATIENT_SEX).default("O"),
+  patientSex: z.enum(PATIENT_SEX).default("O").catch("O"),
   studyDate: z.string().default(""),
   accessionNumber: z.string().nullable().default(null),
   studyInstanceUID: z.string().default(""),
   studyDescription: z.string().default("영상 이름"),
-  modality: z.enum(MODALITIES),
+  modality: z.enum(MODALITIES).catch("OT"),
   institutionName: z.string().default(""),
   imageHash: z.record(z.string(), z.unknown()).default({}),
   bodyPart: z.array(z.string()).default([]),
@@ -40,7 +40,7 @@ export const CaseSchema = z.object({
   acceptedDate: z.string().default(""),
   locked: z.boolean().default(false),
   contentIds: z.array(z.string()).default([]),
-}).strict();
+}).passthrough();
   
 // 케이스 (영상 검사 건)
 export type Case = z.infer<typeof CaseSchema>

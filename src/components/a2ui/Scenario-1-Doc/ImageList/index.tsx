@@ -26,7 +26,7 @@ export default function ImageList({ cases, submitLabel, onSelect, onSubmit, onNo
         <div className={styles.list}>
           {displayingCases.map((item) => {
             const isSelected = selectedIds.includes(item.caseId);
-            const bodyPartLabel = item.bodyPart.filter(Boolean).join(", ") || "-";
+            const bodyPartLabel = item.bodyPart.filter(Boolean).join(", ");
             const thumbnailId = item.contentIds[0];
 
             return (

@@ -2,6 +2,7 @@ import { McpClient } from "./mcp/mcpClient";
 import { callLLMStream, type LLMClientConfig } from "./llm/client";
 import { buildSystemPrompt } from "./llm/prompts";
 import { useChatStore, generateId } from "./util/chatStore";
+import { useCaseStore } from "./util/caseStore";
 
 import type {
   ChatMessage,
@@ -11,7 +12,57 @@ import type {
   ToolCall,
   AccessTokenProvider
 } from "./util/types/generalTypes";
+import { CaseSchema, type Case } from "./util/types/caseTypes";
 
+
+/**
+ * MCP tool 결과에서 cases 배열을 추출한다.
+ * - structuredContent shape: { cases: Case[], total?: number }
+ * - 기본 content shape: [{ type: "text", text: "<stringified JSON>" }]
+ *
+ * 추출 후 CaseSchema로 파싱하여 누락된 필드(contentIds, bodyPart 등)에 default를 적용한다.
+ * 잘못된 case는 버리고 나머지를 반환한다.
+ */
+function extractCasesFromToolResult(content: unknown): Case[] | null {
+  const raw = extractRawCases(content);
+  if (!raw) return null;
+
+  const parsed: Case[] = [];
+  for (const item of raw) {
+    const result = CaseSchema.safeParse(item);
+    if (result.success) {
+      parsed.push(result.data);
+    } else {
+      console.warn("[Orchestrator] case 항목 파싱 실패 - skip", {
+        item,
+        issues: result.error.issues,
+      });
+    }
+  }
+  return parsed;
+}
+
+function extractRawCases(content: unknown): unknown[] | null {
+  if (content && typeof content === "object" && !Array.isArray(content)) {
+    const obj = content as Record<string, unknown>;
+    if (Array.isArray(obj.cases)) return obj.cases;
+  }
+
+  if (Array.isArray(content)) {
+    for (const block of content) {
+      if (block && typeof block === "object" && "text" in block) {
+        try {
+          const inner = JSON.parse((block as { text: string }).text);
+          if (inner && Array.isArray(inner.cases)) return inner.cases;
+        } catch {
+          // not JSON — skip
+        }
+      }
+    }
+  }
+
+  return null;
+}
 
 /**
  *   1. 사용자 메시지를 받아 LLM API를 호출한다  (LLM caller)
@@ -173,6 +224,11 @@ export class Orchestrator {
           useChatStore.getState().attachA2UI(assistantMessageId, block);
         },
         onA2UIError: (err) => {
+          console.warn("[Orchestrator] A2UI 블록 파싱/검증 실패", {
+            reason: err.reason,
+            detail: err.detail,
+            raw: err.raw,
+          });
           this.logger?.warn("A2UI 블록 렌더링 실패", {
             reason: err.reason,
             detail: err.detail,
@@ -223,6 +279,23 @@ export class Orchestrator {
           timestamp: Date.now(),
           hidden: true,
         });
+
+        // MCP tool 결과에 cases 배열이 있으면 caseStore에 hydrate
+        // -> A2UIRenderer가 props.cases 없이도 컴포넌트를 렌더링할 수 있게 함
+        const cases = extractCasesFromToolResult(result.content);
+        console.log("[Orchestrator] tool result", {
+          tool: tc.name,
+          rawContent: result.content,
+          extractedCases: cases?.length ?? 0,
+        });
+        if (cases && cases.length > 0) {
+          useCaseStore.getState().setCases(cases);
+          console.log("[Orchestrator] caseStore hydrated", {
+            tool: tc.name,
+            count: cases.length,
+            firstCaseId: cases[0]?.caseId,
+          });
+        }
       } catch (e) {
         this.logger?.warn("Tool 실행 실패", {
           name: tc.name,

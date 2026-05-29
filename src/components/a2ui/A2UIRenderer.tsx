@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { A2UIBlock } from "../../core/util/types/a2uiSchema";
 import type { Case } from "../../core/util/types/caseTypes";
+import { useCaseStore } from "../../core/util/caseStore";
 
 // Scenario #1
 import ConsentForm from "./Scenario-1-Doc/ConsentForm";
@@ -28,6 +29,16 @@ import DetailModal from "./Scenario-7-Down/DetailModal";
 interface A2UIRendererProps {
   block: A2UIBlock;
   onAction: (action: string, payload: unknown) => void;
+}
+
+// LLM이 \`props.cases\`를 비우거나 빈 배열로 보낸 경우 store에 hydrate된 cases를 사용
+function pickCases(
+  fromProps: Case[] | undefined,
+  fromStore: Case[] | undefined,
+): Case[] | undefined {
+  if (fromProps && fromProps.length > 0) return fromProps;
+  if (fromStore && fromStore.length > 0) return fromStore;
+  return undefined;
 }
 
 function MedicalConsentFormBlock({
@@ -71,6 +82,24 @@ function ClosableDetailModal({
 }
 
 export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
+  // MCP tool 결과로 hydrate된 case 목록 - LLM이 props.cases를 비워두면 이걸 사용
+  const hydratedCases = useCaseStore((s) => s.cases);
+  const fallbackCases = hydratedCases.length > 0 ? hydratedCases : undefined;
+
+  if (block.type === "image-selector" || block.type === "download-selector") {
+    const propCases = (block.props as { cases?: Case[] }).cases;
+    console.log(`[A2UIRenderer] ${block.type}`, {
+      propsCasesCount: propCases?.length ?? 0,
+      storeCasesCount: hydratedCases.length,
+      using:
+        propCases && propCases.length > 0
+          ? "props.cases"
+          : hydratedCases.length > 0
+            ? "store cases"
+            : "component fallback (mock)",
+    });
+  }
+
   switch (block.type) {
     case "show-doctor-video-consent-form":
       return (
@@ -85,7 +114,7 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
     case "image-selector":
       return (
         <ImageList
-          cases={block.props.cases as Case[] | undefined}
+          cases={pickCases(block.props.cases as Case[] | undefined, fallbackCases)}
           onSelect={(caseId) => onAction("select-images", caseId)}
           onSubmit={() => onAction("submit-images", null)}
           onNotFound={() => onAction("not-found", null)}
@@ -180,7 +209,7 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
     case "download-selector":
       return (
         <DownloadImageList
-          cases={block.props.cases as Case[] | undefined}
+          cases={pickCases(block.props.cases as Case[] | undefined, fallbackCases)}
           submitLabel={block.props.submitLabel}
           onSelect={(imageIds) => onAction("download-images", imageIds)}
           onNotFound={() => onAction("not-found", null)}
