@@ -24,7 +24,7 @@ import PurchaseTable, { type PurchaseTableProps } from "./Scenario-3-Hosp/Purcha
 
 // Scenario #7
 import DownloadImageList from "./Scenario-7-Down/DownloadImageList";
-import DetailModal from "./Scenario-7-Down/DetailModal";
+import DetailModalOverlay from "./Scenario-7-Down/DetailModal/DetailModalOverlay";
 
 interface A2UIRendererProps {
   block: A2UIBlock;
@@ -71,7 +71,7 @@ function ClosableDetailModal({
   if (!open) return null;
 
   return (
-    <DetailModal
+    <DetailModalOverlay
       series={series}
       onClose={() => {
         setOpen(false);

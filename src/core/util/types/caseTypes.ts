@@ -28,7 +28,7 @@ export const CaseSchema = z.object({
   studyDate: z.string().default(""),
   accessionNumber: z.string().nullable().default(null),
   studyInstanceUID: z.string().default(""),
-  studyDescription: z.string().default("영상 이름"),
+  studyDescription: z.string().default(""),
   modality: z.enum(MODALITIES).catch("OT"),
   institutionName: z.string().default(""),
   imageHash: z.record(z.string(), z.unknown()).default({}),

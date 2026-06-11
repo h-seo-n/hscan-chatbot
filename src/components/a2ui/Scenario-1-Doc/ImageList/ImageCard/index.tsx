@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { IoChevronForward } from "react-icons/io5";
 import type { Case } from "../../../../../core/util/types/caseTypes";
 import styles from "./ImageCard.module.css";
 import { createAuthenticatedFetch } from "../../../../../core/util/auth/authFetch";
@@ -10,10 +11,11 @@ interface ImageCardProps extends Pick<Case, "caseId" | "studyDescription" | "ins
     bodyPartLabel: string;
     thumbnailId: string;
     onSelect?: (caseId: string) => void;
+    onDetail?: (caseId: string) => void;
 }
 
 // how to select only needed caseId, studyDescription, institutionName, modality and studyDate from Case type?
-const ImageCard = ({ isSelectable, isSelected, bodyPartLabel, thumbnailId, onSelect, caseId, studyDescription, institutionName, modality, studyDate }: ImageCardProps) => {
+const ImageCard = ({ isSelectable, isSelected, bodyPartLabel, thumbnailId, onSelect, onDetail, caseId, studyDescription, institutionName, modality, studyDate }: ImageCardProps) => {
     const [thumbnailSrc, setThumbnailSrc] = useState<string>("");
     const { accessToken } = useAuth();
 
@@ -45,12 +47,15 @@ function formatStudyDate(raw: string): string {
 }
 
     return (
-    <button
-        aria-pressed={isSelected}
+    <div
         className={`${isSelectable ? styles.selectCard : styles.viewCard } ${isSelected ? styles.selected : ""}`}
         key={caseId}
-        onClick={() => onSelect?.(caseId)}
-        type="button"
+        >
+        <button
+            aria-pressed={isSelected}
+            className={styles.selectRegion}
+            onClick={() => onSelect?.(caseId)}
+            type="button"
         >
         {isSelectable &&
         <span
@@ -58,7 +63,7 @@ function formatStudyDate(raw: string): string {
             className={`${styles.checkbox} ${isSelected ? styles.checked : ""}`}
         >
             {isSelected && <span className={styles.checkmark} />}
-        </span> 
+        </span>
         }
             <div className={styles.thumbnail}>
                 {thumbnailSrc ? (
@@ -100,7 +105,19 @@ function formatStudyDate(raw: string): string {
                 )}
                 <div className={styles.date}>{`${formatStudyDate(studyDate)} 촬영`}</div>
             </div>
-    </button>
+        </button>
+
+        {onDetail && (
+            <button
+                aria-label={`${studyDescription || "영상"} 상세 보기`}
+                className={styles.detailButton}
+                onClick={() => onDetail(caseId)}
+                type="button"
+            >
+                <IoChevronForward aria-hidden="true" />
+            </button>
+        )}
+    </div>
     )
 }
 

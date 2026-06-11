@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Case } from "../../../../core/util/types/caseTypes";
 import ImageCard from "../../Scenario-1-Doc/ImageList/ImageCard";
+import DetailModalOverlay from "../DetailModal/DetailModalOverlay";
 import styles from "./DownloadImageList.module.css";
 
 export type DownloadImageListItem = Case;
@@ -145,6 +146,7 @@ export default function DownloadImageList({
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [fileType, setFileType] = useState<DownloadFileType>("jpeg");
+  const [detailCaseId, setDetailCaseId] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const thumbRef = useRef<HTMLSpanElement>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -206,6 +208,11 @@ export default function DownloadImageList({
     onSelect?.(selectedIds, fileType);
   };
 
+  const detailCase = useMemo(
+    () => items.find((item) => item.caseId === detailCaseId) ?? null,
+    [items, detailCaseId],
+  );
+
   return (
     <div className={styles.container}>
       <div className={styles.content}>
@@ -224,6 +231,7 @@ export default function DownloadImageList({
                   bodyPartLabel={bodyPartLabel}
                   thumbnailId={thumbnailId}
                   onSelect={handleSelect}
+                  onDetail={setDetailCaseId}
                   caseId={item.caseId}
                   studyDescription={item.studyDescription}
                   institutionName={item.institutionName}
@@ -286,6 +294,13 @@ export default function DownloadImageList({
           </button>
         ) : null}
       </div>
+
+      {detailCase ? (
+        <DetailModalOverlay
+          series={detailCase.series}
+          onClose={() => setDetailCaseId(null)}
+        />
+      ) : null}
     </div>
   );
 }

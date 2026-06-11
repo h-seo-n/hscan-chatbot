@@ -92,7 +92,8 @@ export default function DetailModal({
   const totalImages = images.length;
   const displayedImageNumber = totalImages > 0 ? activeImageIndex + 1 : 0;
   const sliderMax = Math.max(totalImages - 1, 0);
-  const sliderProgress = sliderMax > 0 ? (activeImageIndex / sliderMax) * 100 : 0;
+  const sliderProgress =
+    sliderMax > 0 ? (activeImageIndex / sliderMax) * 100 : 100;
   const sliderStyle = {
     "--slider-progress": `${sliderProgress}%`,
   } as CSSProperties;
@@ -156,7 +157,7 @@ export default function DetailModal({
       <div aria-label="시리즈 선택" className={styles.seriesTabs} role="tablist">
         {resolvedSeries.map((item, index) => {
           const isActive = index === activeSeriesIndex;
-          const label = item.seriesNumber ?? String(index + 1);
+          const label = String(index + 1);
 
           return (
             <button
@@ -173,7 +174,7 @@ export default function DetailModal({
         })}
       </div>
 
-      <figure className={styles.imageViewport}>
+      <figure className={`${styles.imageViewport} ${imageSrc ? "" : styles.emptyViewport}`}>
         {imageSrc ? (
           <img
             alt={`${activeSeries?.seriesDescription ?? "영상"} ${displayedImageNumber}`}
@@ -203,7 +204,12 @@ export default function DetailModal({
       </div>
 
       <div className={styles.reportBox}>
-        <strong>판독문 : &#123;string&#125;</strong>
+        <strong>판독문 : </strong>
+        <span>
+          {activeSeries?.seriesDescription?.trim()
+            ? activeSeries.seriesDescription
+            : "판독문이 없습니다."}
+        </span>
       </div>
     </section>
   );
