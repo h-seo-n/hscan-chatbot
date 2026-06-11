@@ -44,6 +44,16 @@
   cursor: not-allowed;
 }
 
+.emptyState {
+  align-self: center;
+  margin: 24px 0;
+  color: #6b7280;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: -0.04px;
+  text-align: center;
+}
+
 .emptyStateButton {
   align-self: center;
   border: 0;

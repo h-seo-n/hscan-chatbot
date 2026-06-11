@@ -1,4 +1,3 @@
-import { mockCases } from "../../../../core/util/mockCases";
 import styles from "./ImageList.module.css";
 import type { Case } from "../../../../core/util/types/caseTypes";
 import { useCaseStore } from "../../../../core/util/caseStore";
@@ -16,9 +15,19 @@ interface ImageListProps {
 export default function ImageList({ cases, submitLabel, onSelect, onSubmit, onNotFound }: ImageListProps) {
   const selectedCases = useCaseStore((s) => s.selectedCases);
   const selectedIds = selectedCases.map((c) => c.caseId);
-  // 실제로 ImageList에서 표시하는 영상 : prop으로 전달되는 영상목록 우선, 없을 경우 mock 데이터
-  const displayingCases: Case[] = cases ?? mockCases;
+  // 실제로 ImageList에서 표시하는 영상 : prop으로 전달되는 영상목록 (없으면 빈 목록)
+  const displayingCases: Case[] = cases ?? [];
   const buttonLabel = submitLabel ?? `${selectedIds.length}건 선택하기`;
+
+  if (displayingCases.length === 0) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.content}>
+          <p className={styles.emptyState}>표시할 영상이 없습니다.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>

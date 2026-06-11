@@ -1,6 +1,5 @@
 import type { Orchestrator } from "../../core/orchestrator";
 import { useCaseStore } from "../../core/util/caseStore"
-import { mockCases } from "../../core/util/mockCases";
 import type { QuestionResponse } from "./Scenario-1-Doc/QuestionForm";
 import type { Hospital } from "./Scenario-3-Hosp/HospitalList";
 
@@ -43,7 +42,7 @@ export function createA2UIHandler(orchestrator: Orchestrator) {
         if (alreadySelected) {
             store.deselectCase(caseId);
         } else {
-            const found = mockCases.find((c) => c.caseId === caseId);
+            const found = store.cases.find((c) => c.caseId === caseId);
             if (found) store.selectCase(found)
         }
     }
