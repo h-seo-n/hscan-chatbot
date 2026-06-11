@@ -64,6 +64,79 @@ function extractRawCases(content: unknown): unknown[] | null {
   return null;
 }
 
+interface DownloadInfo {
+  downloadUrl: string;
+  fileName?: string;
+}
+
+/**
+ * downloadImage tool 결과에서 다운로드 정보를 추출한다.
+ * 서버는 downloadUrl(과 fileName)을 돌려주고, 실제 다운로드는 클라이언트가
+ * 이 URL을 열어야 발생한다 (Content-Disposition: attachment).
+ *
+ * 지원 shape:
+ * - { downloadUrl, fileName }
+ * - { downloads: [{ downloadUrl, fileName }, ...] } (여러 영상)
+ * - [{ type: "text", text: "<stringified JSON>" }]
+ */
+function extractDownloadInfos(content: unknown): DownloadInfo[] {
+  const fromObject = (obj: unknown): DownloadInfo[] => {
+    if (!obj || typeof obj !== "object") return [];
+    const rec = obj as Record<string, unknown>;
+
+    if (typeof rec.downloadUrl === "string") {
+      return [
+        {
+          downloadUrl: rec.downloadUrl,
+          fileName: typeof rec.fileName === "string" ? rec.fileName : undefined,
+        },
+      ];
+    }
+
+    if (Array.isArray(rec.downloads)) {
+      return rec.downloads.flatMap(fromObject);
+    }
+
+    return [];
+  };
+
+  const direct = fromObject(content);
+  if (direct.length > 0) return direct;
+
+  if (Array.isArray(content)) {
+    const collected: DownloadInfo[] = [];
+    for (const block of content) {
+      if (block && typeof block === "object" && "text" in block) {
+        try {
+          collected.push(...fromObject(JSON.parse((block as { text: string }).text)));
+        } catch {
+          // not JSON — skip
+        }
+      }
+    }
+    return collected;
+  }
+
+  return [];
+}
+
+/**
+ * 브라우저에서 실제 다운로드를 트리거한다.
+ * Content-Disposition: attachment 응답이므로 페이지 이동 없이 곧바로 다운로드된다.
+ */
+function triggerBrowserDownload({ downloadUrl, fileName }: DownloadInfo): void {
+  if (typeof document === "undefined") return;
+
+  const anchor = document.createElement("a");
+  anchor.href = downloadUrl;
+  if (fileName) anchor.download = fileName;
+  anchor.target = "_blank";
+  anchor.rel = "noopener";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+}
+
 /**
  *   1. 사용자 메시지를 받아 LLM API를 호출한다  (LLM caller)
  *   2. LLM이 tool_call을 반환하면 MCP 서버로 전달한다 (MCP client)
@@ -295,6 +368,18 @@ export class Orchestrator {
             count: cases.length,
             firstCaseId: cases[0]?.caseId,
           });
+        }
+
+        // downloadImage 결과의 downloadUrl을 받아 실제 브라우저 다운로드를 트리거
+        if (tc.name === "downloadImage") {
+          const downloads = extractDownloadInfos(result.content);
+          console.log("[Orchestrator] downloadImage result", {
+            tool: tc.name,
+            downloadCount: downloads.length,
+          });
+          for (const info of downloads) {
+            triggerBrowserDownload(info);
+          }
         }
       } catch (e) {
         this.logger?.warn("Tool 실행 실패", {

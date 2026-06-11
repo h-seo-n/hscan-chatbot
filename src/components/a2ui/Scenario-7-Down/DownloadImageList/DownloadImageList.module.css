@@ -195,6 +195,52 @@
   will-change: top, height;
 }
 
+.formatToggle {
+  display: flex;
+  align-items: stretch;
+  width: min(373px, 100%);
+  padding: 4px;
+  gap: 4px;
+  border: 1px solid #d6d6d6;
+  border-radius: 12px;
+  background: #f3f4f6;
+  box-sizing: border-box;
+}
+
+.formatOption {
+  flex: 1 1 0;
+  min-height: 40px;
+  padding: 8px 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #4b5563;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+  letter-spacing: -0.04px;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.formatOption:hover {
+  color: #1f2937;
+}
+
+.formatOptionActive {
+  background: #ffffff;
+  color: #0059e6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.formatOption:focus-visible {
+  outline: 3px solid rgba(0, 89, 230, 0.2);
+  outline-offset: 2px;
+}
+
 .submitButton {
   display: flex;
   align-items: center;

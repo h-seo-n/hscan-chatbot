@@ -2,6 +2,7 @@ import type { Orchestrator } from "../../core/orchestrator";
 import { useCaseStore } from "../../core/util/caseStore"
 import type { QuestionResponse } from "./Scenario-1-Doc/QuestionForm";
 import type { Hospital } from "./Scenario-3-Hosp/HospitalList";
+import type { DownloadFileType } from "./Scenario-7-Down/DownloadImageList";
 
 interface AddressContactPayload {
     address: string;
@@ -148,12 +149,14 @@ export function createA2UIHandler(orchestrator: Orchestrator) {
         );
     };
 
-    const handleDownloadImages = (imageIds: string[], /*fileType: "jpeg" | "dicom"*/) => {
+    const handleDownloadImages = (imageIds: string[], fileType: DownloadFileType) => {
         if (imageIds.length === 0) return;
 
-        orchestrator.addHiddenMessage(`다운로드 선택 영상 목록: ${imageIds.join(", ")}`);
+        orchestrator.addHiddenMessage(
+            `다운로드 선택 영상 목록: ${imageIds.join(", ")} / 파일 형식: ${fileType}`,
+        );
         orchestrator.handleUserMessage(
-            `downloadImage 툴을 호출하세요.`,
+            `downloadImage 툴을 "${fileType}" 형식으로 호출하세요.`,
             { hidden: true },
         );
     };
@@ -197,9 +200,14 @@ export function createA2UIHandler(orchestrator: Orchestrator) {
         handlePurchaseImagingPayment(payload);
         break;
       // scenario-7
-      case "download-images":
-        handleDownloadImages(payload as string[]);
+      case "download-images": {
+        const { imageIds, fileType } = payload as {
+          imageIds: string[];
+          fileType: DownloadFileType;
+        };
+        handleDownloadImages(imageIds, fileType);
         break;
+      }
       default: break;
     }
     console.log("[App] A2UI action:", action, payload);

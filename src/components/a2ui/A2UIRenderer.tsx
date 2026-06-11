@@ -211,7 +211,7 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
         <DownloadImageList
           cases={pickCases(block.props.cases as Case[] | undefined, fallbackCases)}
           submitLabel={block.props.submitLabel}
-          onSelect={(imageIds) => onAction("download-images", imageIds)}
+          onSelect={(imageIds, fileType) => onAction("download-images", { imageIds, fileType })}
           onNotFound={() => onAction("not-found", null)}
         />
       );

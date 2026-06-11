@@ -5,10 +5,17 @@ import styles from "./DownloadImageList.module.css";
 
 export type DownloadImageListItem = Case;
 
+export type DownloadFileType = "jpeg" | "dicom";
+
+const FILE_TYPE_OPTIONS: { value: DownloadFileType; label: string }[] = [
+  { value: "jpeg", label: "JPEG" },
+  { value: "dicom", label: "DICOM" },
+];
+
 interface DownloadImageListProps {
   cases?: DownloadImageListItem[];
   submitLabel?: string;
-  onSelect?: (imageIds: string[]) => void;
+  onSelect?: (imageIds: string[], fileType: DownloadFileType) => void;
   onNotFound?: () => void;
 }
 
@@ -137,6 +144,7 @@ export default function DownloadImageList({
   );
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [fileType, setFileType] = useState<DownloadFileType>("jpeg");
   const listRef = useRef<HTMLDivElement>(null);
   const thumbRef = useRef<HTMLSpanElement>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -195,7 +203,7 @@ export default function DownloadImageList({
       return;
     }
 
-    onSelect?.(selectedIds);
+    onSelect?.(selectedIds, fileType);
   };
 
   return (
@@ -235,6 +243,28 @@ export default function DownloadImageList({
               }}
             />
           </span>
+        </div>
+
+        <div
+          className={styles.formatToggle}
+          role="radiogroup"
+          aria-label="다운로드 파일 형식"
+        >
+          {FILE_TYPE_OPTIONS.map((option) => {
+            const isActive = fileType === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="radio"
+                aria-checked={isActive}
+                className={`${styles.formatOption} ${isActive ? styles.formatOptionActive : ""}`}
+                onClick={() => setFileType(option.value)}
+              >
+                {option.label}
+              </button>
+            );
+          })}
         </div>
 
         <button
