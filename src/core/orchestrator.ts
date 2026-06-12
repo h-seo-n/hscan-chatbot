@@ -29,7 +29,7 @@ function extractCasesFromToolResult(content: unknown): Case[] | null {
 
   const parsed: Case[] = [];
   for (const item of raw) {
-    const result = CaseSchema.safeParse(item);
+    const result = CaseSchema.safeParse(normalizeCaseItem(item));
     if (result.success) {
       parsed.push(result.data);
     } else {
@@ -43,9 +43,16 @@ function extractCasesFromToolResult(content: unknown): Case[] | null {
 }
 
 function extractRawCases(content: unknown): unknown[] | null {
-  if (content && typeof content === "object" && !Array.isArray(content)) {
-    const obj = content as Record<string, unknown>;
+  // getImageList 류는 { cases }, getImageByHospital 류는 { result } 로 배열을 돌려준다.
+  const pickArray = (obj: Record<string, unknown>): unknown[] | null => {
     if (Array.isArray(obj.cases)) return obj.cases;
+    if (Array.isArray(obj.result)) return obj.result;
+    return null;
+  };
+
+  if (content && typeof content === "object" && !Array.isArray(content)) {
+    const arr = pickArray(content as Record<string, unknown>);
+    if (arr) return arr;
   }
 
   if (Array.isArray(content)) {
@@ -53,7 +60,10 @@ function extractRawCases(content: unknown): unknown[] | null {
       if (block && typeof block === "object" && "text" in block) {
         try {
           const inner = JSON.parse((block as { text: string }).text);
-          if (inner && Array.isArray(inner.cases)) return inner.cases;
+          if (inner && typeof inner === "object") {
+            const arr = pickArray(inner as Record<string, unknown>);
+            if (arr) return arr;
+          }
         } catch {
           // not JSON — skip
         }
@@ -62,6 +72,36 @@ function extractRawCases(content: unknown): unknown[] | null {
   }
 
   return null;
+}
+
+/**
+ * 영상 목록 tool 결과의 개별 항목을 CaseSchema가 파싱할 수 있는 형태로 정규화한다.
+ *
+ * getImageByHospital 처럼 아직 사용자 계정으로 가져오지 않은 병원 영상은
+ * caseId가 없고, modality 대신 modalities 배열을, studyDate 대신 date를 쓰며
+ * studyDescription이 null 일 수 있다. 이를 Case 형태로 매핑한다.
+ * (studyInstanceUID를 caseId로 사용 — 선택/조회의 식별자로 쓰인다.)
+ */
+function normalizeCaseItem(item: unknown): unknown {
+  if (!item || typeof item !== "object" || Array.isArray(item)) return item;
+  const rec = item as Record<string, unknown>;
+
+  // 이미 Case 형태(caseId 보유)면 그대로 둔다.
+  if (typeof rec.caseId === "string" && rec.caseId.length > 0) return item;
+
+  // 병원 영상 검색 결과 형태: studyInstanceUID 기반
+  if (typeof rec.studyInstanceUID === "string" && rec.studyInstanceUID.length > 0) {
+    const modalities = Array.isArray(rec.modalities) ? rec.modalities : [];
+    return {
+      ...rec,
+      caseId: rec.studyInstanceUID,
+      studyDate: typeof rec.date === "string" ? rec.date : (rec.studyDate ?? ""),
+      modality: typeof modalities[0] === "string" ? modalities[0] : undefined,
+      studyDescription: rec.studyDescription ?? "",
+    };
+  }
+
+  return item;
 }
 
 interface DownloadInfo {

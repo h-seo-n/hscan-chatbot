@@ -105,6 +105,15 @@ const HospitalSelectorBlock = z.object({
   }).strict(),
 });
 
+// 아직 가져오지 않은 제휴 병원 영상 목록 (getImageByHospital 결과) 선택 UI
+const HospitalImageSelectorBlock = z.object({
+  type: z.literal("hospital-image-selector"),
+  props: z.object({
+    cases: z.array(CaseSchema).optional(),
+    submitLabel: z.string().optional(),
+  }).strict(),
+});
+
 const PurchaseImagingBlock = z.object({
   type: z.literal("purchase-imaging"),
   props: z.object({
@@ -160,6 +169,7 @@ export const A2UIBlockSchema = z.discriminatedUnion("type", [
   CdPurchaseCardBlock,
   // Scenario #3
   HospitalSelectorBlock,
+  HospitalImageSelectorBlock,
   PurchaseImagingBlock,
   PurchaseTableBlock,
   // Scenario #7

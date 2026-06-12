@@ -1,0 +1,190 @@
+.container {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 18px 20px 20px;
+  background: #ffffff;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.card.selected {
+  border-color: #0059e6;
+  box-shadow: 0 0 0 1px #0059e6;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #c1c1c1;
+  border-radius: 7px;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.checkbox.checked {
+  border-color: #0059e6;
+  background: #0059e6;
+}
+
+.checkmark {
+  width: 12px;
+  height: 7px;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  transform: translateY(-1px) rotate(-45deg);
+}
+
+.title {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #1f2937;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: -0.0494px;
+  word-break: keep-all;
+}
+
+.badge {
+  flex: 0 0 auto;
+  padding: 7px 14px;
+  border-radius: 10px;
+  background: #e6edff;
+  color: #2f55d4;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.table {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2.4fr);
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  color: #3c3c3c;
+  font-size: 18px;
+  line-height: 26px;
+  letter-spacing: -0.0494px;
+}
+
+.labelCell,
+.valueCell {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  min-width: 0;
+  margin: 0;
+  padding: 12px 18px;
+  box-sizing: border-box;
+}
+
+.labelCell {
+  background: #f4f5f7;
+  color: #6b7280;
+  font-weight: 500;
+  border-right: 1px solid #e3e3e3;
+}
+
+.valueCell {
+  background: #ffffff;
+  color: #1f2937;
+  word-break: keep-all;
+}
+
+/* 첫 행 하단 보더 */
+.table > .labelCell:nth-of-type(1),
+.table > .valueCell:nth-of-type(1) {
+  border-bottom: 1px solid #e3e3e3;
+}
+
+.emptyState {
+  align-self: center;
+  margin: 24px 0;
+  color: #6b7280;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: -0.04px;
+  text-align: center;
+}
+
+.emptyStateButton {
+  align-self: center;
+  border: 0;
+  background: transparent;
+  color: #0059e6;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: -0.0494px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 6px 0 0;
+}
+
+.emptyStateButton:hover {
+  color: #004ecc;
+}
+
+@media (max-width: 576px) {
+  .card {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .table {
+    font-size: 16px;
+  }
+
+  .labelCell,
+  .valueCell {
+    padding: 10px 14px;
+    min-height: 50px;
+  }
+}

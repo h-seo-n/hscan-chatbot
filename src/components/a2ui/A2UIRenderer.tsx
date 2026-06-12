@@ -19,6 +19,7 @@ import MedicalConsentForm from "./Scenario-2-CD/CDPurchaseCard/MedicalConsentFor
 
 // Scenario #3
 import HospitalListComponent, { type Hospital } from "./Scenario-3-Hosp/HospitalList";
+import HospitalImageList from "./Scenario-3-Hosp/HospitalImageList";
 import PurchaseImaging from "./Scenario-3-Hosp/PurchaseImaging";
 import PurchaseTable, { type PurchaseTableProps } from "./Scenario-3-Hosp/PurchaseImaging/PurchaseTable";
 
@@ -188,6 +189,17 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
         <HospitalListComponent
           HospitalList={block.props.hospitals as Hospital[] | undefined}
           onSubmit={(hospital) => onAction("select-hospital", hospital)}
+        />
+      );
+
+    case "hospital-image-selector":
+      return (
+        <HospitalImageList
+          cases={pickCases(block.props.cases as Case[] | undefined, fallbackCases)}
+          submitLabel={block.props.submitLabel}
+          onSelect={(caseId) => onAction("select-images", caseId)}
+          onSubmit={() => onAction("submit-images", null)}
+          onNotFound={() => onAction("not-found", null)}
         />
       );
 
