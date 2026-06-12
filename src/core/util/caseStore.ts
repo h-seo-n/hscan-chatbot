@@ -35,8 +35,12 @@ interface CaseState {
   deselectCase: (caseId: string) => void;
   clearSelectedCases: () => void;
 
-  /** Fetch cases: id 넣을 시 특정 Case만 반환; omit for filtered+paginated list. */
-  fetchCases: (params?: CaseQueryParams) => Promise<void>;
+  /**
+   * Fetch cases: id 넣을 시 특정 Case만 반환; omit for filtered+paginated list.
+   * `/case`는 인증이 필요한 엔드포인트이므로, 호출하는 쪽에서 access token이 적용된
+   * fetch(`createAuthenticatedFetch`)를 넘겨야 한다. 생략하면 인증 없는 전역 fetch를 쓴다.
+   */
+  fetchCases: (params?: CaseQueryParams, fetcher?: typeof fetch) => Promise<void>;
   /** Replace the full list (e.g. after an external mutation) */
   setCases: (cases: Case[]) => void;
   clearCases: () => void;
@@ -64,7 +68,7 @@ export const useCaseStore = create<CaseState>((set) => ({
 
   fetchCase: async (caseId: string) => {
     try {
-      const res = await fetch(`${HEALTHINFO_API_URL}/case/${caseId}`);
+      const res = await fetch(`${HEALTHINFO_API_URL}case/${caseId}`);
       
       if (!res.ok) {
         throw new Error(`GET /case failed: ${res.status} ${res.statusText}`);
@@ -78,11 +82,11 @@ export const useCaseStore = create<CaseState>((set) => ({
     }
   },
   
-  fetchCases: async (params = {}) => {
+  fetchCases: async (params = {}, fetcher = fetch) => {
     set({ isLoading: true, error: null });
 
     try {
-      const url = new URL(`${HEALTHINFO_API_URL}/case`);
+      const url = new URL(`${HEALTHINFO_API_URL}case`);
       // if id exists : bypass all, just query for the specific id
       // Filtered + paginated listing, sorted by most recent
       if (params.page !== undefined) url.searchParams.set("page", String(params.page));
@@ -100,7 +104,7 @@ export const useCaseStore = create<CaseState>((set) => ({
       if (params.bodypartType) url.searchParams.set("studyDateFrom", params.bodypartType);      
       
       // 요청 결과
-      const res = await fetch(url.toString());
+      const res = await fetcher(url.toString());
 
       if (!res.ok) {
         throw new Error(`GET /case failed: ${res.status} ${res.statusText}`);

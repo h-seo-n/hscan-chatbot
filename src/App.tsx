@@ -9,6 +9,7 @@ import HomePage from "./components/Home/HomePage";
 // import AddressContactInfo from "./components/a2ui/Scenario-2-CD/AddressContactInfo";
 // import DeliverInfoCard from "./components/a2ui/Scenario-2-CD/CDPurchaseCard/DeliverInfoCard";
 import { createA2UIHandler } from "./components/a2ui/A2UIHandlers";
+import PurchasePopup from "./components/a2ui/Scenario-3-Hosp/PurchaseImaging/PurchasePopup";
 import { consoleLogger, sentryLogger } from "./core/util/logger";
 import { useAuth } from "./core/util/auth/useAuth";
 
@@ -129,7 +130,10 @@ function App() {
         appLogger.warn("Orchestrator 준비 전 A2UI 액션이 발생했습니다");
       };
     }
-    return createA2UIHandler(orchestratorRef.current);
+    return createA2UIHandler(
+      orchestratorRef.current,
+      () => accessTokenRef.current,
+    );
   }, [initStatus.kind]);
 
   // 렌더링
@@ -154,6 +158,7 @@ function App() {
   return (
     <div>
        <HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction} handleAbort={handleAbort}/>
+       <PurchasePopup />
 	     {/* <QuestionForm questions={[]} />
       <ImageList 
         onSelect={(caseId) => handleA2UIAction("select-images", caseId)}

@@ -3,6 +3,7 @@ import { callLLMStream, type LLMClientConfig } from "./llm/client";
 import { buildSystemPrompt } from "./llm/prompts";
 import { useChatStore, generateId } from "./util/chatStore";
 import { useCaseStore } from "./util/caseStore";
+import { usePaymentStore, extractStudyPayment } from "./util/paymentStore";
 
 import type {
   ChatMessage,
@@ -256,6 +257,11 @@ export class Orchestrator {
   ): Promise<void> {
     const store = useChatStore.getState();
 
+    if (store.isLoading || this.currentAbort) {
+      this.logger?.warn("이미 처리 중인 사용자 요청이 있어 새 요청을 무시합니다.");
+      return;
+    }
+
     // 1. 사용자 메시지를 store에 추가
     const userMsg: ChatMessage = {
       id: generateId(),
@@ -349,7 +355,9 @@ export class Orchestrator {
         },
         onToolCalls: (calls) => {
           collectedToolCalls = calls;
-          useChatStore.getState().setToolCalls(assistantMessageId, calls);
+          const chatStore = useChatStore.getState();
+          chatStore.setToolCalls(assistantMessageId, calls);
+          chatStore.updateMessage(assistantMessageId, { hidden: true });
         },
         onDone: () => {
           useChatStore.getState().markStreamingDone(assistantMessageId);
@@ -408,6 +416,19 @@ export class Orchestrator {
             count: cases.length,
             firstCaseId: cases[0]?.caseId,
           });
+        }
+
+        // requestImage 결과는 결제 정보(결제 id + 금액)만 담고 있다.
+        // paymentStore에 보관해 두면 결제 팝업에서 결제 완료 API 호출에 쓸 수 있다.
+        if (tc.name === "requestImage") {
+          const payment = extractStudyPayment(result.content);
+          console.log("[Orchestrator] requestImage result", {
+            tool: tc.name,
+            paymentId: payment?.id ?? null,
+          });
+          if (payment) {
+            usePaymentStore.getState().setPayment(payment);
+          }
         }
 
         // downloadImage 결과의 downloadUrl을 받아 실제 브라우저 다운로드를 트리거
@@ -505,14 +526,15 @@ export class Orchestrator {
       if (msg.role === "user") {
         messages.push({ role: "user", content: msg.content });
       } else if (msg.role === "assistant") {
+        const hasToolCalls = !!msg.toolCalls && msg.toolCalls.length > 0;
         const assistantMsg: LLMRequestMessage = {
           role: "assistant",
-          content: msg.content,
+          content: hasToolCalls ? "" : msg.content,
         };
-        if (msg.toolCalls && msg.toolCalls.length > 0) {
+        if (hasToolCalls) {
           (assistantMsg as LLMRequestMessage & {
             tool_calls: unknown[];
-          }).tool_calls = msg.toolCalls.map((tc) => ({
+          }).tool_calls = msg.toolCalls!.map((tc) => ({
             id: tc.id,
             type: "function",
             function: {

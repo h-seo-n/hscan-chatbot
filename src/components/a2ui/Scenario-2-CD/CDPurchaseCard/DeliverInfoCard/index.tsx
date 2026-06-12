@@ -34,7 +34,7 @@ export default function DeliverInfoCard({
   addressDetail,
   name,
   tel,
-  registeredMailCost,
+  registeredMailCost=1000,
   onChange,
 }: DeliverInfoCardProps) {
   const resolvedAddress = address ?? fallbackDeliverInfo.address;
