@@ -199,7 +199,6 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
           submitLabel={block.props.submitLabel}
           onSelect={(caseId) => onAction("select-images", caseId)}
           onSubmit={() => onAction("submit-images", null)}
-          onNotFound={() => onAction("not-found", null)}
         />
       );
 

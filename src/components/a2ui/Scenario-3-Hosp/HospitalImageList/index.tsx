@@ -9,7 +9,6 @@ interface HospitalImageListProps {
   submitLabel?: string;
   onSelect: (caseId: string) => void; // 영상 선택/해제 시
   onSubmit: () => void;
-  onNotFound?: () => void; // '찾는 영상이 없다' 클릭 시
 }
 
 /** DICOM modality 코드 → 한국어 검사 장비 라벨 */
@@ -61,7 +60,6 @@ export default function HospitalImageList({
   submitLabel,
   onSelect,
   onSubmit,
-  onNotFound,
 }: HospitalImageListProps) {
   const selectedCases = useCaseStore((s) => s.selectedCases);
   const selectedIds = selectedCases.map((c) => c.caseId);
@@ -128,15 +126,6 @@ export default function HospitalImageList({
           canMoveOn={selectedIds.length > 0}
           onClick={onSubmit}
         />
-        {onNotFound ? (
-          <button
-            className={styles.emptyStateButton}
-            onClick={onNotFound}
-            type="button"
-          >
-            찾는 영상이 없다
-          </button>
-        ) : null}
       </div>
     </div>
   );

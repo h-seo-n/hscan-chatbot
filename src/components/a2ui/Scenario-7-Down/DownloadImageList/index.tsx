@@ -20,129 +20,14 @@ interface DownloadImageListProps {
   onNotFound?: () => void;
 }
 
-const fallbackCases: DownloadImageListItem[] = [
-  {
-    caseId: "video-1",
-    patientId: "P001",
-    birthDate: "19900101",
-    patientName: "테스트^환자1",
-    patientSex: "M",
-    studyDate: "20260101",
-    accessionNumber: null,
-    studyInstanceUID: "1.2.3.4.5.1",
-    studyDescription: "영상 이름",
-    modality: "CT",
-    institutionName: "촬영 병원",
-    imageHash: {},
-    bodyPart: ["촬영 부위"],
-    series: [],
-    createdAt: null,
-    userId: "user1",
-    requestedDate: "2026-01-01T00:00:00Z",
-    acceptedDate: "2026-01-01T00:00:00Z",
-    locked: false,
-    contentIds: [],
-  },
-  {
-    caseId: "video-2",
-    patientId: "P002",
-    birthDate: "19900102",
-    patientName: "테스트^환자2",
-    patientSex: "F",
-    studyDate: "20260102",
-    accessionNumber: null,
-    studyInstanceUID: "1.2.3.4.5.2",
-    studyDescription: "영상 이름",
-    modality: "MR",
-    institutionName: "촬영 병원",
-    imageHash: {},
-    bodyPart: ["촬영 부위"],
-    series: [],
-    createdAt: null,
-    userId: "user1",
-    requestedDate: "2026-01-02T00:00:00Z",
-    acceptedDate: "2026-01-02T00:00:00Z",
-    locked: false,
-    contentIds: [],
-  },
-  {
-    caseId: "video-3",
-    patientId: "P003",
-    birthDate: "19900103",
-    patientName: "테스트^환자3",
-    patientSex: "O",
-    studyDate: "20260103",
-    accessionNumber: null,
-    studyInstanceUID: "1.2.3.4.5.3",
-    studyDescription: "영상 이름",
-    modality: "US",
-    institutionName: "촬영 병원",
-    imageHash: {},
-    bodyPart: ["촬영 부위"],
-    series: [],
-    createdAt: null,
-    userId: "user1",
-    requestedDate: "2026-01-03T00:00:00Z",
-    acceptedDate: "2026-01-03T00:00:00Z",
-    locked: false,
-    contentIds: [],
-  },
-  {
-    caseId: "video-4",
-    patientId: "P004",
-    birthDate: "19900104",
-    patientName: "테스트^환자4",
-    patientSex: "M",
-    studyDate: "20260104",
-    accessionNumber: null,
-    studyInstanceUID: "1.2.3.4.5.4",
-    studyDescription: "영상 이름",
-    modality: "CT",
-    institutionName: "촬영 병원",
-    imageHash: {},
-    bodyPart: ["촬영 부위"],
-    series: [],
-    createdAt: null,
-    userId: "user1",
-    requestedDate: "2026-01-04T00:00:00Z",
-    acceptedDate: "2026-01-04T00:00:00Z",
-    locked: false,
-    contentIds: [],
-  },
-  {
-    caseId: "video-5",
-    patientId: "P005",
-    birthDate: "19900105",
-    patientName: "테스트^환자5",
-    patientSex: "F",
-    studyDate: "20260105",
-    accessionNumber: null,
-    studyInstanceUID: "1.2.3.4.5.5",
-    studyDescription: "영상 이름",
-    modality: "MR",
-    institutionName: "촬영 병원",
-    imageHash: {},
-    bodyPart: ["촬영 부위"],
-    series: [],
-    createdAt: null,
-    userId: "user1",
-    requestedDate: "2026-01-05T00:00:00Z",
-    acceptedDate: "2026-01-05T00:00:00Z",
-    locked: false,
-    contentIds: [],
-  },
-];
-
 export default function DownloadImageList({
   cases = [],
   submitLabel,
   onSelect,
   onNotFound,
 }: DownloadImageListProps) {
-  const items = useMemo(
-    () => (cases.length > 0 ? cases : fallbackCases),
-    [cases],
-  );
+  const items = cases;
+  const isEmpty = items.length === 0;
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [fileType, setFileType] = useState<DownloadFileType>("jpeg");
@@ -212,6 +97,16 @@ export default function DownloadImageList({
     () => items.find((item) => item.caseId === detailCaseId) ?? null,
     [items, detailCaseId],
   );
+
+  if (isEmpty) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.content}>
+          <p className={styles.emptyMessage}>영상이 없습니다.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
