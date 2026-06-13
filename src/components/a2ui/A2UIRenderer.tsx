@@ -3,6 +3,7 @@ import type { A2UIBlock } from "../../core/util/types/a2uiSchema";
 import type { Case } from "../../core/util/types/caseTypes";
 import { useCaseStore } from "../../core/util/caseStore";
 import { useCdDeliveryPaymentStore } from "../../core/util/cdDeliveryPaymentStore";
+import { useHospitalStore } from "../../core/util/hospitalStore";
 import { useAuth } from "../../core/util/auth/useAuth";
 import { createAuthenticatedFetch } from "../../core/util/auth/authFetch";
 
@@ -90,6 +91,8 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
   const hydratedCases = useCaseStore((s) => s.cases);
   const fetchCases = useCaseStore((s) => s.fetchCases);
   const cdDeliveryPayment = useCdDeliveryPaymentStore((s) => s.payment);
+  const issueSourceHospital = useHospitalStore((s) => s.issueSourceHospital);
+  const sendDestinationHospital = useHospitalStore((s) => s.sendDestinationHospital);
   const fallbackCases = hydratedCases.length > 0 ? hydratedCases : undefined;
   const { accessToken } = useAuth();
   const cdDeliveryInfo = cdDeliveryPayment
@@ -225,7 +228,12 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
       return (
         <HospitalListComponent
           HospitalList={block.props.hospitals as Hospital[] | undefined}
-          onSubmit={(hospital) => onAction("select-hospital", hospital)}
+          onSubmit={(hospital) =>
+            onAction("select-hospital", {
+              hospital,
+              purpose: block.props.purpose,
+            })
+          }
         />
       );
 
@@ -243,6 +251,8 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
       return (
         <PurchaseImaging
           hospitalName={block.props.hospitalName}
+          sourceHospitalName={block.props.sourceHospitalName ?? block.props.hospitalName ?? issueSourceHospital?.name}
+          destinationHospitalName={block.props.destinationHospitalName ?? sendDestinationHospital?.name}
           selectedVideoCount={block.props.selectedVideoCount}
           issueCost={block.props.issueCost}
           agencyFee={block.props.agencyFee}

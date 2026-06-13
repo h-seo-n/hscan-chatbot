@@ -3,6 +3,7 @@ import { callLLMStream, type LLMClientConfig } from "./llm/client";
 import { buildSystemPrompt } from "./llm/prompts";
 import { useChatStore, generateId } from "./util/chatStore";
 import { useCaseStore } from "./util/caseStore";
+import { useHospitalStore } from "./util/hospitalStore";
 import { usePaymentStore, extractStudyPayment } from "./util/paymentStore";
 
 import type {
@@ -384,6 +385,32 @@ export class Orchestrator {
     for (const tc of toolCalls) {
       this.logger?.debug("tool 실행", {name: tc.name});
       try {
+        const blockedDestinationLookup = this.getBlockedDestinationHospitalLookupMessage(tc);
+        if (blockedDestinationLookup) {
+          this.logger?.warn("목적지 병원 영상 조회 차단", {
+            name: tc.name,
+            arguments: tc.arguments,
+          });
+          store.addMessage({
+            id: generateId(),
+            role: "tool",
+            content: JSON.stringify({
+              error: true,
+              message: blockedDestinationLookup,
+            }),
+            toolResult: {
+              toolCallId: tc.id,
+              content: {
+                error: true,
+                message: blockedDestinationLookup,
+              },
+            },
+            timestamp: Date.now(),
+            hidden: true,
+          });
+          continue;
+        }
+
         // tool 실행 후 결과 받아옴
         const result = await this.mcpClient.callTool({
           toolName: tc.name,
@@ -416,6 +443,19 @@ export class Orchestrator {
             count: cases.length,
             firstCaseId: cases[0]?.caseId,
           });
+        }
+
+        if (tc.name === "getImageByHospital") {
+          const hospitalName = tc.arguments.hospitalName;
+          if (typeof hospitalName === "string" && hospitalName.trim().length > 0) {
+            const hospitalStore = useHospitalStore.getState();
+            if (!hospitalStore.issueSourceHospital) {
+              hospitalStore.setIssueSourceHospital({
+                id: "",
+                name: hospitalName.trim(),
+              });
+            }
+          }
         }
 
         // requestImage 결과는 결제 정보(결제 id + 금액)만 담고 있다.
@@ -463,6 +503,37 @@ export class Orchestrator {
         })
       }
     }
+  }
+
+  private getBlockedDestinationHospitalLookupMessage(tc: ToolCall): string | null {
+    if (tc.name !== "getImageByHospital") return null;
+
+    const requestedHospitalName = tc.arguments.hospitalName;
+    if (typeof requestedHospitalName !== "string") return null;
+
+    const normalizedRequested = requestedHospitalName.trim();
+    if (!normalizedRequested) return null;
+
+    const hospitalStore = useHospitalStore.getState();
+    const sourceHospital = hospitalStore.issueSourceHospital ?? hospitalStore.hospital;
+    const destinationHospital = hospitalStore.sendDestinationHospital;
+    const selectedCases = useCaseStore.getState().selectedCases;
+
+    if (
+      sourceHospital &&
+      destinationHospital &&
+      selectedCases.length > 0 &&
+      sourceHospital.name !== destinationHospital.name &&
+      normalizedRequested === destinationHospital.name
+    ) {
+      return [
+        `${destinationHospital.name}은 영상을 가져올 병원이 아니라 보낼 목적지 병원입니다.`,
+        `이미 ${sourceHospital.name}에서 가져올 영상 ${selectedCases.length}건이 선택되어 있으므로 목적지 병원에 대해 getImageByHospital을 호출하지 마세요.`,
+        "다음 응답에는 추가 영상 선택 없이 purchase-imaging A2UI를 출력하세요.",
+      ].join(" ");
+    }
+
+    return null;
   }
 
   /**

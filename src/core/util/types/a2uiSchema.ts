@@ -57,6 +57,8 @@ const HospitalSchema = z.object({
   name: z.string().min(1),
 }).strict();
 
+const HospitalPurposeSchema = z.enum(["issue-source", "send-destination"]);
+
 /* Scenario #2 - CD 등기우편 발송 */
 const AddressContactInputBlock = z.object({
   type: z.literal("address-contact-input"),
@@ -102,6 +104,7 @@ const HospitalSelectorBlock = z.object({
   type: z.literal("hospital-selector"),
   props: z.object({
     hospitals: z.array(HospitalSchema).optional(),
+    purpose: HospitalPurposeSchema.optional(),
   }).strict(),
 });
 
@@ -118,6 +121,8 @@ const PurchaseImagingBlock = z.object({
   type: z.literal("purchase-imaging"),
   props: z.object({
     hospitalName: z.string().optional(),
+    sourceHospitalName: z.string().optional(),
+    destinationHospitalName: z.string().optional(),
     selectedVideoCount: PriceValueSchema.optional(),
     issueCost: PriceValueSchema.optional(),
     agencyFee: PriceValueSchema.optional(),

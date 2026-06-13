@@ -28,6 +28,8 @@ const QuestionForm = ({
   onSubmit,
 }: QuestionFormProps) => {
   const items = questions.length > 0 ? questions : fallbackQuestions;
+  const isSingleQuestion = items.length === 1;
+  const isSingleChoiceQuestion = isSingleQuestion && !items[0]?.hasInput;
   const [checkedItems, setCheckedItems] = useState<boolean[]>(items.map(() => false));
   const [inputValues, setInputValues] = useState<string[]>(items.map(() => ""));
 
@@ -83,10 +85,40 @@ const QuestionForm = ({
     );
   };
 
+  const submitSelected = (selectedIndexes?: number[]) => {
+    const selectedIndexSet = selectedIndexes ? new Set(selectedIndexes) : null;
+    onSubmit({
+      selectedQuestions: items.map((item, index) => ({
+          item,
+          value: inputValues[index],
+        }))
+        .filter((_, index) =>
+          selectedIndexSet ? selectedIndexSet.has(index) : checkedItems[index],
+        ),
+    });
+  };
+
+  if (isSingleChoiceQuestion) {
+    return (
+      <div className={`${styles.formCard} ${styles.compactCard}`}>
+        <div className={styles.compactContent}>
+          <p className={styles.compactQuestion}>{items[0].question}</p>
+          <button
+            className={styles.submitButton}
+            type="button"
+            onClick={() => submitSelected([0])}
+          >
+            확인
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.formCard}>
+    <div className={`${styles.formCard} ${isSingleQuestion ? styles.compactCard : ""}`}>
       <div className={styles.content}>
-        <div className={styles.questionList}>
+        <div className={`${styles.questionList} ${isSingleQuestion ? styles.compactQuestionList : ""}`}>
           {items.map((item, index) => (
             <div className={styles.questionRow} key={`${item.question}-${index}`}>
               <button
@@ -129,15 +161,7 @@ const QuestionForm = ({
         <button
           className={styles.submitButton}
           type="button"
-          onClick={() =>
-            onSubmit({
-              selectedQuestions: items.map((item, index) => ({
-                  item,
-                  value: inputValues[index],
-                }))
-                .filter((_, index) => checkedItems[index]),
-            })
-          }
+          onClick={() => submitSelected()}
         >
           완료
         </button>
