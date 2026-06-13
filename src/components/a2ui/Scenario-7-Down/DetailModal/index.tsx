@@ -2,6 +2,8 @@ import type { ChangeEvent, CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import type { Case } from "../../../../core/util/types/caseTypes";
+import { createAuthenticatedFetch } from "../../../../core/util/auth/authFetch";
+import { useAuth } from "../../../../core/util/auth/useAuth";
 import styles from "./DetailModal.module.css";
 
 interface DetailModalProps {
@@ -9,7 +11,7 @@ interface DetailModalProps {
   onClose?: () => void;
 }
 
-const IMAGE_BASE_URL = import.meta.env.HEALTHINFOHEALTHINFO_IMAGE_URL as string | undefined;
+const IMAGE_BASE_URL = import.meta.env.VITE_HEALTHINFO_API_URL as string | undefined;
 
 const fallbackCase: Case = {
   caseId: "fallback-case",
@@ -59,16 +61,39 @@ export default function DetailModal({
 }: DetailModalProps) {
   const [activeSeriesIndex, setActiveSeriesIndex] = useState(0);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [imageSrc, setImageSrc] = useState<string>("");
+  const { accessToken } = useAuth();
   const resolvedSeries = series?.length ? series : fallbackCase.series;
 
   const activeSeries = resolvedSeries[activeSeriesIndex];
   const images = useMemo(() => activeSeries?.images ?? [], [activeSeries]);
   const currentImageId = images[activeImageIndex];
-  const imageSrc = currentImageId && IMAGE_BASE_URL ? `${IMAGE_BASE_URL}${currentImageId}` : "";
+
+  useEffect(() => {
+    if (!currentImageId || !IMAGE_BASE_URL) {
+      setImageSrc("");
+      return;
+    }
+    const authFetch = createAuthenticatedFetch(() => accessToken);
+    let objectUrl: string | undefined;
+    let cancelled = false;
+    authFetch(`${IMAGE_BASE_URL}image/${currentImageId}`)
+      .then((res) => res.blob())
+      .then((blob) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setImageSrc(objectUrl);
+      });
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [currentImageId, accessToken]);
   const totalImages = images.length;
   const displayedImageNumber = totalImages > 0 ? activeImageIndex + 1 : 0;
   const sliderMax = Math.max(totalImages - 1, 0);
-  const sliderProgress = sliderMax > 0 ? (activeImageIndex / sliderMax) * 100 : 0;
+  const sliderProgress =
+    sliderMax > 0 ? (activeImageIndex / sliderMax) * 100 : 100;
   const sliderStyle = {
     "--slider-progress": `${sliderProgress}%`,
   } as CSSProperties;
@@ -132,7 +157,7 @@ export default function DetailModal({
       <div aria-label="시리즈 선택" className={styles.seriesTabs} role="tablist">
         {resolvedSeries.map((item, index) => {
           const isActive = index === activeSeriesIndex;
-          const label = item.seriesNumber ?? String(index + 1);
+          const label = String(index + 1);
 
           return (
             <button
@@ -149,7 +174,7 @@ export default function DetailModal({
         })}
       </div>
 
-      <figure className={styles.imageViewport}>
+      <figure className={`${styles.imageViewport} ${imageSrc ? "" : styles.emptyViewport}`}>
         {imageSrc ? (
           <img
             alt={`${activeSeries?.seriesDescription ?? "영상"} ${displayedImageNumber}`}
@@ -179,7 +204,12 @@ export default function DetailModal({
       </div>
 
       <div className={styles.reportBox}>
-        <strong>판독문 : &#123;string&#125;</strong>
+        <strong>판독문 : </strong>
+        <span>
+          {activeSeries?.seriesDescription?.trim()
+            ? activeSeries.seriesDescription
+            : "판독문이 없습니다."}
+        </span>
       </div>
     </section>
   );

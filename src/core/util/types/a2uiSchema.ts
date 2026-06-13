@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CaseSchema, SeriesSchema } from "./caseTypes";
 
 // prop이 없는 A2UI 블록 : 빈 객체만 허용
 const EmptyProps = z.object({}).strict();
@@ -25,7 +26,9 @@ const SendImageConsentFormBlock = z.object({
 
 const ImageSelectorBlock = z.object({
     type: z.literal("image-selector"),
-    props: EmptyProps,
+    props: z.object({
+        cases: z.array(CaseSchema).optional(),
+    }).strict(),
 });
 
 const SelectedImagesListBlock = z.object({
@@ -54,35 +57,7 @@ const HospitalSchema = z.object({
   name: z.string().min(1),
 }).strict();
 
-const SeriesSchema = z.object({
-  seriesNumber: z.string().nullable().default(null),
-  seriesInstanceUID: z.string().min(1),
-  seriesDescription: z.string().nullable().default(null),
-  images: z.array(z.string()).default([]),
-}).strict();
-
-const CaseSchema = z.object({
-  caseId: z.string().min(1),
-  patientId: z.string().default(""),
-  birthDate: z.string().default(""),
-  patientName: z.string().default(""),
-  patientSex: z.enum(["M", "F", "O"]).default("O"),
-  studyDate: z.string().default(""),
-  accessionNumber: z.string().nullable().default(null),
-  studyInstanceUID: z.string().default(""),
-  studyDescription: z.string().default("영상 이름"),
-  modality: z.string().default(""),
-  institutionName: z.string().default(""),
-  imageHash: z.record(z.string(), z.unknown()).default({}),
-  bodyPart: z.array(z.string()).default([]),
-  series: z.array(SeriesSchema).default([]),
-  createdAt: z.string().nullable().default(null),
-  userId: z.string().default(""),
-  requestedDate: z.string().default(""),
-  acceptedDate: z.string().default(""),
-  locked: z.boolean().default(false),
-  contentIds: z.array(z.string()).default([]),
-}).strict();
+const HospitalPurposeSchema = z.enum(["issue-source", "send-destination"]);
 
 /* Scenario #2 - CD 등기우편 발송 */
 const AddressContactInputBlock = z.object({
@@ -129,6 +104,16 @@ const HospitalSelectorBlock = z.object({
   type: z.literal("hospital-selector"),
   props: z.object({
     hospitals: z.array(HospitalSchema).optional(),
+    purpose: HospitalPurposeSchema.optional(),
+  }).strict(),
+});
+
+// 아직 가져오지 않은 제휴 병원 영상 목록 (getImageByHospital 결과) 선택 UI
+const HospitalImageSelectorBlock = z.object({
+  type: z.literal("hospital-image-selector"),
+  props: z.object({
+    cases: z.array(CaseSchema).optional(),
+    submitLabel: z.string().optional(),
   }).strict(),
 });
 
@@ -136,6 +121,8 @@ const PurchaseImagingBlock = z.object({
   type: z.literal("purchase-imaging"),
   props: z.object({
     hospitalName: z.string().optional(),
+    sourceHospitalName: z.string().optional(),
+    destinationHospitalName: z.string().optional(),
     selectedVideoCount: PriceValueSchema.optional(),
     issueCost: PriceValueSchema.optional(),
     agencyFee: PriceValueSchema.optional(),
@@ -187,6 +174,7 @@ export const A2UIBlockSchema = z.discriminatedUnion("type", [
   CdPurchaseCardBlock,
   // Scenario #3
   HospitalSelectorBlock,
+  HospitalImageSelectorBlock,
   PurchaseImagingBlock,
   PurchaseTableBlock,
   // Scenario #7

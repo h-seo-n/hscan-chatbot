@@ -24,6 +24,50 @@
   letter-spacing: -0.0494px;
 }
 
+.hospitalRoute {
+  align-self: stretch;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #d8deea;
+  border-radius: 8px;
+  background: #f8fafc;
+  box-sizing: border-box;
+}
+
+.hospitalRoute div {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.hospitalRoute dt,
+.hospitalRoute dd {
+  margin: 0;
+  font-family:
+    "Pretendard",
+    "Apple SD Gothic Neo",
+    "Noto Sans KR",
+    sans-serif;
+  line-height: 22px;
+}
+
+.hospitalRoute dt {
+  color: #5b6472;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.hospitalRoute dd {
+  min-width: 0;
+  color: #111111;
+  font-size: 15px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
 .paymentButton {
   align-self: center;
   width: min(307px, 100%);

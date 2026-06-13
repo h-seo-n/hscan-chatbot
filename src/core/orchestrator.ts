@@ -2,6 +2,9 @@ import { McpClient } from "./mcp/mcpClient";
 import { callLLMStream, type LLMClientConfig } from "./llm/client";
 import { buildSystemPrompt } from "./llm/prompts";
 import { useChatStore, generateId } from "./util/chatStore";
+import { useCaseStore } from "./util/caseStore";
+import { useHospitalStore } from "./util/hospitalStore";
+import { usePaymentStore, extractStudyPayment } from "./util/paymentStore";
 
 import type {
   ChatMessage,
@@ -11,7 +14,170 @@ import type {
   ToolCall,
   AccessTokenProvider
 } from "./util/types/generalTypes";
+import { CaseSchema, type Case } from "./util/types/caseTypes";
 
+
+/**
+ * MCP tool 결과에서 cases 배열을 추출한다.
+ * - structuredContent shape: { cases: Case[], total?: number }
+ * - 기본 content shape: [{ type: "text", text: "<stringified JSON>" }]
+ *
+ * 추출 후 CaseSchema로 파싱하여 누락된 필드(contentIds, bodyPart 등)에 default를 적용한다.
+ * 잘못된 case는 버리고 나머지를 반환한다.
+ */
+function extractCasesFromToolResult(content: unknown): Case[] | null {
+  const raw = extractRawCases(content);
+  if (!raw) return null;
+
+  const parsed: Case[] = [];
+  for (const item of raw) {
+    const result = CaseSchema.safeParse(normalizeCaseItem(item));
+    if (result.success) {
+      parsed.push(result.data);
+    } else {
+      console.warn("[Orchestrator] case 항목 파싱 실패 - skip", {
+        item,
+        issues: result.error.issues,
+      });
+    }
+  }
+  return parsed;
+}
+
+function extractRawCases(content: unknown): unknown[] | null {
+  // getImageList 류는 { cases }, getImageByHospital 류는 { result } 로 배열을 돌려준다.
+  const pickArray = (obj: Record<string, unknown>): unknown[] | null => {
+    if (Array.isArray(obj.cases)) return obj.cases;
+    if (Array.isArray(obj.result)) return obj.result;
+    return null;
+  };
+
+  if (content && typeof content === "object" && !Array.isArray(content)) {
+    const arr = pickArray(content as Record<string, unknown>);
+    if (arr) return arr;
+  }
+
+  if (Array.isArray(content)) {
+    for (const block of content) {
+      if (block && typeof block === "object" && "text" in block) {
+        try {
+          const inner = JSON.parse((block as { text: string }).text);
+          if (inner && typeof inner === "object") {
+            const arr = pickArray(inner as Record<string, unknown>);
+            if (arr) return arr;
+          }
+        } catch {
+          // not JSON — skip
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * 영상 목록 tool 결과의 개별 항목을 CaseSchema가 파싱할 수 있는 형태로 정규화한다.
+ *
+ * getImageByHospital 처럼 아직 사용자 계정으로 가져오지 않은 병원 영상은
+ * caseId가 없고, modality 대신 modalities 배열을, studyDate 대신 date를 쓰며
+ * studyDescription이 null 일 수 있다. 이를 Case 형태로 매핑한다.
+ * (studyInstanceUID를 caseId로 사용 — 선택/조회의 식별자로 쓰인다.)
+ */
+function normalizeCaseItem(item: unknown): unknown {
+  if (!item || typeof item !== "object" || Array.isArray(item)) return item;
+  const rec = item as Record<string, unknown>;
+
+  // 이미 Case 형태(caseId 보유)면 그대로 둔다.
+  if (typeof rec.caseId === "string" && rec.caseId.length > 0) return item;
+
+  // 병원 영상 검색 결과 형태: studyInstanceUID 기반
+  if (typeof rec.studyInstanceUID === "string" && rec.studyInstanceUID.length > 0) {
+    const modalities = Array.isArray(rec.modalities) ? rec.modalities : [];
+    return {
+      ...rec,
+      caseId: rec.studyInstanceUID,
+      studyDate: typeof rec.date === "string" ? rec.date : (rec.studyDate ?? ""),
+      modality: typeof modalities[0] === "string" ? modalities[0] : undefined,
+      studyDescription: rec.studyDescription ?? "",
+    };
+  }
+
+  return item;
+}
+
+interface DownloadInfo {
+  downloadUrl: string;
+  fileName?: string;
+}
+
+/**
+ * downloadImage tool 결과에서 다운로드 정보를 추출한다.
+ * 서버는 downloadUrl(과 fileName)을 돌려주고, 실제 다운로드는 클라이언트가
+ * 이 URL을 열어야 발생한다 (Content-Disposition: attachment).
+ *
+ * 지원 shape:
+ * - { downloadUrl, fileName }
+ * - { downloads: [{ downloadUrl, fileName }, ...] } (여러 영상)
+ * - [{ type: "text", text: "<stringified JSON>" }]
+ */
+function extractDownloadInfos(content: unknown): DownloadInfo[] {
+  const fromObject = (obj: unknown): DownloadInfo[] => {
+    if (!obj || typeof obj !== "object") return [];
+    const rec = obj as Record<string, unknown>;
+
+    if (typeof rec.downloadUrl === "string") {
+      return [
+        {
+          downloadUrl: rec.downloadUrl,
+          fileName: typeof rec.fileName === "string" ? rec.fileName : undefined,
+        },
+      ];
+    }
+
+    if (Array.isArray(rec.downloads)) {
+      return rec.downloads.flatMap(fromObject);
+    }
+
+    return [];
+  };
+
+  const direct = fromObject(content);
+  if (direct.length > 0) return direct;
+
+  if (Array.isArray(content)) {
+    const collected: DownloadInfo[] = [];
+    for (const block of content) {
+      if (block && typeof block === "object" && "text" in block) {
+        try {
+          collected.push(...fromObject(JSON.parse((block as { text: string }).text)));
+        } catch {
+          // not JSON — skip
+        }
+      }
+    }
+    return collected;
+  }
+
+  return [];
+}
+
+/**
+ * 브라우저에서 실제 다운로드를 트리거한다.
+ * Content-Disposition: attachment 응답이므로 페이지 이동 없이 곧바로 다운로드된다.
+ */
+function triggerBrowserDownload({ downloadUrl, fileName }: DownloadInfo): void {
+  if (typeof document === "undefined") return;
+
+  const anchor = document.createElement("a");
+  anchor.href = downloadUrl;
+  if (fileName) anchor.download = fileName;
+  anchor.target = "_blank";
+  anchor.rel = "noopener";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+}
 
 /**
  *   1. 사용자 메시지를 받아 LLM API를 호출한다  (LLM caller)
@@ -92,6 +258,11 @@ export class Orchestrator {
   ): Promise<void> {
     const store = useChatStore.getState();
 
+    if (store.isLoading || this.currentAbort) {
+      this.logger?.warn("이미 처리 중인 사용자 요청이 있어 새 요청을 무시합니다.");
+      return;
+    }
+
     // 1. 사용자 메시지를 store에 추가
     const userMsg: ChatMessage = {
       id: generateId(),
@@ -112,13 +283,13 @@ export class Orchestrator {
           this.currentAbort.signal,
         );
 
-      if (iterationResult.toolCalls.length === 0) {
-        // tool_call 없으면 루프 종료
-        return;
-      }
+        if (iterationResult.toolCalls.length === 0) {
+          // tool_call 없으면 루프 종료
+          return;
+        }
       
-      // tool call 있음 : 실행 -> 결과를 store에 기록
-      // 다음 iteration에서 buildLLMMessages가 tool call 반영
+        // tool call 있음 : 실행 -> 결과를 store에 기록
+        // 다음 iteration에서 buildLLMMessages가 tool call 반영
         await this.executeToolCalls(iterationResult.toolCalls);
         loop += 1;
       }
@@ -173,6 +344,11 @@ export class Orchestrator {
           useChatStore.getState().attachA2UI(assistantMessageId, block);
         },
         onA2UIError: (err) => {
+          console.warn("[Orchestrator] A2UI 블록 파싱/검증 실패", {
+            reason: err.reason,
+            detail: err.detail,
+            raw: err.raw,
+          });
           this.logger?.warn("A2UI 블록 렌더링 실패", {
             reason: err.reason,
             detail: err.detail,
@@ -180,7 +356,9 @@ export class Orchestrator {
         },
         onToolCalls: (calls) => {
           collectedToolCalls = calls;
-          useChatStore.getState().setToolCalls(assistantMessageId, calls);
+          const chatStore = useChatStore.getState();
+          chatStore.setToolCalls(assistantMessageId, calls);
+          chatStore.updateMessage(assistantMessageId, { hidden: true });
         },
         onDone: () => {
           useChatStore.getState().markStreamingDone(assistantMessageId);
@@ -207,6 +385,32 @@ export class Orchestrator {
     for (const tc of toolCalls) {
       this.logger?.debug("tool 실행", {name: tc.name});
       try {
+        const blockedDestinationLookup = this.getBlockedDestinationHospitalLookupMessage(tc);
+        if (blockedDestinationLookup) {
+          this.logger?.warn("목적지 병원 영상 조회 차단", {
+            name: tc.name,
+            arguments: tc.arguments,
+          });
+          store.addMessage({
+            id: generateId(),
+            role: "tool",
+            content: JSON.stringify({
+              error: true,
+              message: blockedDestinationLookup,
+            }),
+            toolResult: {
+              toolCallId: tc.id,
+              content: {
+                error: true,
+                message: blockedDestinationLookup,
+              },
+            },
+            timestamp: Date.now(),
+            hidden: true,
+          });
+          continue;
+        }
+
         // tool 실행 후 결과 받아옴
         const result = await this.mcpClient.callTool({
           toolName: tc.name,
@@ -215,13 +419,69 @@ export class Orchestrator {
         store.addMessage({
           id: generateId(),
           role: "tool",
-          content: 
+          content:
             typeof result.content === "string"
               ? result.content
               : JSON.stringify(result.content),
           toolResult: { toolCallId: tc.id, content: result.content },
           timestamp: Date.now(),
+          hidden: true,
         });
+
+        // MCP tool 결과에 cases 배열이 있으면 caseStore에 hydrate
+        // -> A2UIRenderer가 props.cases 없이도 컴포넌트를 렌더링할 수 있게 함
+        const cases = extractCasesFromToolResult(result.content);
+        console.log("[Orchestrator] tool result", {
+          tool: tc.name,
+          rawContent: result.content,
+          extractedCases: cases?.length ?? 0,
+        });
+        if (cases && cases.length > 0) {
+          useCaseStore.getState().setCases(cases);
+          console.log("[Orchestrator] caseStore hydrated", {
+            tool: tc.name,
+            count: cases.length,
+            firstCaseId: cases[0]?.caseId,
+          });
+        }
+
+        if (tc.name === "getImageByHospital") {
+          const hospitalName = tc.arguments.hospitalName;
+          if (typeof hospitalName === "string" && hospitalName.trim().length > 0) {
+            const hospitalStore = useHospitalStore.getState();
+            if (!hospitalStore.issueSourceHospital) {
+              hospitalStore.setIssueSourceHospital({
+                id: "",
+                name: hospitalName.trim(),
+              });
+            }
+          }
+        }
+
+        // requestImage 결과는 결제 정보(결제 id + 금액)만 담고 있다.
+        // paymentStore에 보관해 두면 결제 팝업에서 결제 완료 API 호출에 쓸 수 있다.
+        if (tc.name === "requestImage") {
+          const payment = extractStudyPayment(result.content);
+          console.log("[Orchestrator] requestImage result", {
+            tool: tc.name,
+            paymentId: payment?.id ?? null,
+          });
+          if (payment) {
+            usePaymentStore.getState().setPayment(payment);
+          }
+        }
+
+        // downloadImage 결과의 downloadUrl을 받아 실제 브라우저 다운로드를 트리거
+        if (tc.name === "downloadImage") {
+          const downloads = extractDownloadInfos(result.content);
+          console.log("[Orchestrator] downloadImage result", {
+            tool: tc.name,
+            downloadCount: downloads.length,
+          });
+          for (const info of downloads) {
+            triggerBrowserDownload(info);
+          }
+        }
       } catch (e) {
         this.logger?.warn("Tool 실행 실패", {
           name: tc.name,
@@ -239,9 +499,41 @@ export class Orchestrator {
             content: { error: true },
           },
           timestamp: Date.now(),
+          hidden: true,
         })
       }
     }
+  }
+
+  private getBlockedDestinationHospitalLookupMessage(tc: ToolCall): string | null {
+    if (tc.name !== "getImageByHospital") return null;
+
+    const requestedHospitalName = tc.arguments.hospitalName;
+    if (typeof requestedHospitalName !== "string") return null;
+
+    const normalizedRequested = requestedHospitalName.trim();
+    if (!normalizedRequested) return null;
+
+    const hospitalStore = useHospitalStore.getState();
+    const sourceHospital = hospitalStore.issueSourceHospital ?? hospitalStore.hospital;
+    const destinationHospital = hospitalStore.sendDestinationHospital;
+    const selectedCases = useCaseStore.getState().selectedCases;
+
+    if (
+      sourceHospital &&
+      destinationHospital &&
+      selectedCases.length > 0 &&
+      sourceHospital.name !== destinationHospital.name &&
+      normalizedRequested === destinationHospital.name
+    ) {
+      return [
+        `${destinationHospital.name}은 영상을 가져올 병원이 아니라 보낼 목적지 병원입니다.`,
+        `이미 ${sourceHospital.name}에서 가져올 영상 ${selectedCases.length}건이 선택되어 있으므로 목적지 병원에 대해 getImageByHospital을 호출하지 마세요.`,
+        "다음 응답에는 추가 영상 선택 없이 purchase-imaging A2UI를 출력하세요.",
+      ].join(" ");
+    }
+
+    return null;
   }
 
   /**
@@ -305,14 +597,15 @@ export class Orchestrator {
       if (msg.role === "user") {
         messages.push({ role: "user", content: msg.content });
       } else if (msg.role === "assistant") {
+        const hasToolCalls = !!msg.toolCalls && msg.toolCalls.length > 0;
         const assistantMsg: LLMRequestMessage = {
           role: "assistant",
-          content: msg.content,
+          content: hasToolCalls ? "" : msg.content,
         };
-        if (msg.toolCalls && msg.toolCalls.length > 0) {
+        if (hasToolCalls) {
           (assistantMsg as LLMRequestMessage & {
             tool_calls: unknown[];
-          }).tool_calls = msg.toolCalls.map((tc) => ({
+          }).tool_calls = msg.toolCalls!.map((tc) => ({
             id: tc.id,
             type: "function",
             function: {

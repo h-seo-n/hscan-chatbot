@@ -73,16 +73,12 @@
 .hospitalName,
 .submitButton {
   font-family:
-    "Inter",
-    "Noto Sans KR",
-    "Pretendard",
-    "Apple SD Gothic Neo",
-    sans-serif;
+    "Inter", "Noto Sans KR", "Pretendard", "Apple SD Gothic Neo", sans-serif;
 }
 
 .hospitalName {
   display: block;
-  min-width: 0;
+  min-width: 150px;
   color: #000000;
   font-size: 20px;
   font-weight: 400;

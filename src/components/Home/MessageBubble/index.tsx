@@ -1,3 +1,4 @@
+import ReactMarkdown from "react-markdown";
 import type { ChatMessage } from "../../../core/util/types/generalTypes";
 import A2UIRenderer from "../../a2ui/A2UIRenderer";
 import styles from "./MessageBubble.module.css";
@@ -32,18 +33,28 @@ export const MessageLoading = () => {
 
 const MessageBubble = ({ message, onA2UIAction }: MessageBubbleProps) => {
   const isUser = message.role === "user";
+  const hasContent = message.content && message.content.length > 0;
+  const hasA2UI = message.a2uiBlocks && message.a2uiBlocks.length > 0;
+
+  if (!hasContent && !hasA2UI) return null;
 
   return (
     <div className={`${styles.messageBubble} ${isUser ? styles.user : styles.assistant}`}>
       {/* 텍스트 내용 */}
-      <div>
-        {message.content}
-      </div>
+      {hasContent && (
+        <div className={styles.messageContent}>
+          {isUser ? (
+            message.content
+          ) : (
+            <ReactMarkdown>{message.content}</ReactMarkdown>
+          )}
+        </div>
+      )}
 
       {/* A2UI 블록이 있으면 렌더링 */}
       {message.a2uiBlocks && (
-        message.a2uiBlocks.map(b => (
-          <div className={styles.messageA2ui}>
+        message.a2uiBlocks.map((b, i) => (
+          <div key={`${message.id}-a2ui-${i}`} className={styles.messageA2ui}>
             <A2UIRenderer block={b} onAction={onA2UIAction} />
           </div>
         ))

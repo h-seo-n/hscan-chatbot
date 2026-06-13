@@ -1,17 +1,55 @@
 import type { Orchestrator } from "../../core/orchestrator";
 import { useCaseStore } from "../../core/util/caseStore"
-import { mockCases } from "../../core/util/mockCases";
+import { useCdDeliveryPaymentStore } from "../../core/util/cdDeliveryPaymentStore";
+import { generateId, useChatStore } from "../../core/util/chatStore";
+import { usePaymentStore } from "../../core/util/paymentStore";
+import { type HospitalPurpose, useHospitalStore } from "../../core/util/hospitalStore";
+import type { AccessTokenProvider } from "../../core/util/types/generalTypes";
 import type { QuestionResponse } from "./Scenario-1-Doc/QuestionForm";
 import type { Hospital } from "./Scenario-3-Hosp/HospitalList";
+import type { DownloadFileType } from "./Scenario-7-Down/DownloadImageList";
+import { usePaymentPopupStore } from "./Scenario-3-Hosp/PurchaseImaging/paymentPopupStore";
+import {
+    completeImagingPayment,
+    requestImageIssuance,
+} from "./Scenario-3-Hosp/PurchaseImaging/paymentApi";
+import { calculatePurchaseTotal, parsePrice, type PurchaseTableProps } from "./Scenario-3-Hosp/PurchaseImaging/PurchaseTable";
+import {
+    completeCdDeliveryPayment,
+    DEFAULT_CD_DELIVERY_FEE,
+    requestCdDeliveryPayment,
+    type CdDeliveryMailingAddress,
+    type CdDeliveryPaymentResponse,
+} from "./Scenario-2-CD/CDPurchaseCard/cdDeliveryPaymentApi";
 
 interface AddressContactPayload {
     address: string;
     addressDetail: string;
     name: string;
     tel: string;
+    registeredMailCost?: number | string;
 }
 
-export function createA2UIHandler(orchestrator: Orchestrator) {
+interface SelectHospitalPayload {
+    hospital: Hospital;
+    purpose?: HospitalPurpose;
+}
+
+interface PurchaseImagingPayload extends Partial<PurchaseTableProps> {
+    hospitalName?: string;
+    sourceHospitalName?: string;
+    destinationHospitalName?: string;
+}
+
+const knownHospitals: Hospital[] = [
+    { id: "seoul-hospital", name: "서울병원" },
+    { id: "computer-clinic", name: "컴퓨터의원" },
+];
+
+export function createA2UIHandler(
+    orchestrator: Orchestrator,
+    getAccessToken: AccessTokenProvider,
+) {
 
     // const HEALTHINFO_API_URL = import.meta.env.VITE_HEALTHINFO_API_URL ?? "";
 
@@ -43,7 +81,7 @@ export function createA2UIHandler(orchestrator: Orchestrator) {
         if (alreadySelected) {
             store.deselectCase(caseId);
         } else {
-            const found = mockCases.find((c) => c.caseId === caseId);
+            const found = store.cases.find((c) => c.caseId === caseId);
             if (found) store.selectCase(found)
         }
     }
@@ -66,9 +104,85 @@ export function createA2UIHandler(orchestrator: Orchestrator) {
         );
     }
 
+    // 선택한 병원/검사로 영상 발급 결제를 생성(POST /hospital/study/payment)하고
+    // 결제 정보(결제 id + 확정 금액)를 paymentStore에 보관한 뒤 반환한다.
+    // 영상 선택 완료(submit-hospital-images)와 결제하기(pay-purchase-imaging) 양쪽에서
+    // 사용한다. 선택 병원이나 검사가 없으면 명확한 에러를 던진다.
+    const createImageIssuancePayment = async () => {
+        const selected = useCaseStore.getState().selectedCases;
+        const hospitalStore = useHospitalStore.getState();
+        const hospital = hospitalStore.issueSourceHospital ?? hospitalStore.hospital;
+        const studyInstanceUIDs = selected
+            .map((c) => c.studyInstanceUID || c.caseId)
+            .filter((uid): uid is string => Boolean(uid));
+
+        if (!hospital?.id && !hospital?.name) {
+            throw new Error("영상을 가져올 병원 정보가 없습니다. 가져올 병원 선택 단계부터 다시 진행해 주세요.");
+        }
+        if (studyInstanceUIDs.length === 0) {
+            throw new Error("선택된 영상 정보가 없습니다. 영상 선택 단계부터 다시 진행해 주세요.");
+        }
+
+        const payment = await requestImageIssuance({
+            hospitalId: hospital.id,
+            hospitalName: hospital.name,
+            studyInstanceUIDs,
+            getAccessToken,
+        });
+        usePaymentStore.getState().setPayment(payment);
+        return payment;
+    };
+
+    // 제휴 병원 영상(hospital-image-selector)의 '가져오기' 클릭 시점.
+    // 선택한 병원/검사로 영상 발급 결제를 미리 생성해 두고, LLM이 결제 화면
+    // (purchase-imaging / index.tsx)을 렌더링하도록 안내한다.
+    // 실제 결제 완료(PUT)는 이후 결제 단계(PurchasePopup "결제하기")에서 진행한다.
+    const handleSubmitHospitalImages = async () => {
+        const selected = useCaseStore.getState().selectedCases;
+        if (selected.length === 0) return;
+
+        let payment = null;
+        try {
+            payment = await createImageIssuancePayment();
+        } catch (error) {
+            // 여기서 실패해도 결제 단계(onConfirm)에서 한 번 더 시도하므로 로그만 남긴다.
+            console.error("[A2UIHandlers] 영상 발급 결제 생성 실패", error);
+        }
+
+        const names = selected.map((c) => c.caseId).join(", ");
+        orchestrator.addHiddenMessage(`선택된 병원 영상 목록 : ${names}`);
+
+        const hospitalStore = useHospitalStore.getState();
+        const sourceHospital = hospitalStore.issueSourceHospital ?? hospitalStore.hospital;
+        const destinationHospital = hospitalStore.sendDestinationHospital;
+        const feeInfo = payment
+            ? ` 확정 결제 금액은 ${payment.price.totalFee}원입니다.`
+            : "";
+        const routeInfo = [
+            sourceHospital ? `가져올 병원: ${sourceHospital.name}` : null,
+            destinationHospital ? `보낼 병원: ${destinationHospital.name}` : null,
+        ].filter(Boolean).join(" / ");
+
+        if (routeInfo) {
+            orchestrator.addHiddenMessage(`선택된 병원 영상 처리 경로: ${routeInfo}`);
+        }
+
+        const nextStepInstruction = destinationHospital
+            ? `다음 단계로 결제 금액과 의료영상 발급 동의, 결제 버튼이 포함된 purchase-imaging A2UI를 출력하세요. ` +
+                `sourceHospitalName은 "${sourceHospital?.name ?? ""}", destinationHospitalName은 "${destinationHospital.name}"으로 넣고, ` +
+                `보낼 영상은 이미 선택된 같은 영상이므로 병원이나 영상을 다시 선택하게 하지 마세요.`
+            : `다음 단계로 결제 금액과 의료영상 발급 동의, 결제 버튼이 포함된 purchase-imaging A2UI를 출력하세요.`;
+
+        orchestrator.handleUserMessage(
+            `제휴 병원에서 ${selected.length}건의 영상을 가져오기로 선택했습니다.${feeInfo} ` +
+                nextStepInstruction,
+            { hidden: true },
+        );
+    };
+
     const handleNotFoundImages = () => {
         orchestrator.handleUserMessage(
-            "현재 영상 선택 목록에서 찾는 영상이 없습니다. 현재 시나리오 규칙에 맞는 다음 단계로 진행하세요.",
+            "현재 영상 선택 목록에서 찾는 영상이 없습니다. 바로 다음 단계로 넘어가지 말고, 현재 시나리오의 '찾는 영상이 없을 때' 규칙에 따라 응답하세요.",
             { hidden: true },
         );
     };
@@ -98,25 +212,88 @@ export function createA2UIHandler(orchestrator: Orchestrator) {
         orchestrator.handleUserMessage("코드 다시 생성"); 
     };
 
-    const handleSubmitAddressContact = ({
+    const getSelectedCaseIds = () => {
+        const caseIds = useCaseStore.getState().selectedCases
+            .map((c) => c.caseId)
+            .filter((caseId): caseId is string => Boolean(caseId));
+
+        return [...new Set(caseIds)];
+    };
+
+    const createCdDeliveryPayment = async ({
         address,
         addressDetail,
         name,
         tel,
+        registeredMailCost,
     }: AddressContactPayload) => {
+        const caseIds = getSelectedCaseIds();
+        if (caseIds.length === 0) {
+            throw new Error("CD로 발급할 영상이 선택되지 않았습니다.");
+        }
+
+        const deliveryFee = parsePrice(registeredMailCost ?? DEFAULT_CD_DELIVERY_FEE);
+        const mailingAddress: Partial<CdDeliveryMailingAddress> = {
+            baseAddress: address,
+            detailAddress: addressDetail,
+            receiverName: name,
+            receiverPhone: tel,
+        };
+
+        const payment = await requestCdDeliveryPayment({
+            caseIds,
+            mailingAddress,
+            deliveryFee,
+            getAccessToken,
+        });
+
+        useCdDeliveryPaymentStore.getState().setPayment(payment);
+        return payment;
+    };
+
+    const handleSubmitAddressContact = async (payload: AddressContactPayload) => {
+        const {
+            address,
+            addressDetail,
+            name,
+            tel,
+        } = payload;
+
+        let payment: CdDeliveryPaymentResponse;
+        try {
+            payment = await createCdDeliveryPayment(payload);
+        } catch (error) {
+            console.error("[A2UIHandlers] CD 배송 결제 생성 실패", error);
+            orchestrator.addHiddenMessage(
+                `CD 배송 결제 생성 실패: ${error instanceof Error ? error.message : String(error)}`,
+            );
+            orchestrator.handleUserMessage(
+                "CD 배송 결제 생성에 실패했습니다. 결제 단계로 넘어가지 말고 사용자에게 영상 선택과 배송지 입력을 다시 확인하도록 안내하세요.",
+                { hidden: true },
+            );
+            return;
+        }
+
         const hiddenInfo = [
             "입력된 등기우편 배송 정보",
             `주소: ${address}`,
             `상세주소: ${addressDetail}`,
             `수령인: ${name}`,
             `휴대전화 번호: ${tel}`,
+            `CD 배송 결제 id: ${payment.id}`,
+            `CD 배송 결제 금액: ${payment.price.amount}원`,
+            `CD 배송 결제 caseIds: ${payment.caseIds.join(", ")}`,
         ].join("\n");
 
         orchestrator.addHiddenMessage(hiddenInfo);
-        orchestrator.handleUserMessage("배송지와 연락처 입력을 완료했습니다.");
+        orchestrator.handleUserMessage(
+            "배송지와 연락처 입력 및 CD 배송 결제 생성이 완료되었습니다. 다음 응답에는 입력된 배송 정보, 의료영상 발급 동의, 결제 버튼이 포함된 cd-purchase-card A2UI를 출력하세요. registeredMailCost에는 CD 배송 결제 금액을 넣으세요.",
+            { hidden: true },
+        );
     };
 
     const handleChangeDeliveryInfo = () => {
+        useCdDeliveryPaymentStore.getState().clear();
         orchestrator.handleUserMessage("배송지 정보를 변경하겠습니다.");
     };
 
@@ -126,35 +303,224 @@ export function createA2UIHandler(orchestrator: Orchestrator) {
         }
     };
 
-    const handleCdPayment = () => {
+    const handleCdPayment = (payload: unknown) => {
+        const props = (payload ?? {}) as Partial<AddressContactPayload>;
+        const payment = useCdDeliveryPaymentStore.getState().payment;
+        const amount =
+            payment?.price.amount ?? parsePrice(props.registeredMailCost ?? DEFAULT_CD_DELIVERY_FEE);
+
+        usePaymentPopupStore.getState().open({
+            amount,
+            onConfirm: async () => {
+                const current = useCdDeliveryPaymentStore.getState().payment;
+                if (!current) {
+                    throw new Error("CD 배송 결제 정보가 없습니다. 배송지 입력 단계부터 다시 진행해 주세요.");
+                }
+
+                const { ok, status } = await completeCdDeliveryPayment(current.id, getAccessToken);
+                if (!ok) {
+                    throw new Error(`결제 완료 실패 (status: ${status})`);
+                }
+
+                orchestrator.addHiddenMessage(
+                    `CD 배송 결제 완료: 결제 id ${current.id}, 결제 금액 ${current.price.amount}원`,
+                );
+                orchestrator.handleUserMessage(
+                    "CD 발급 결제가 완료되었습니다. 현재 시나리오의 완료 안내만 하세요.",
+                    { hidden: true },
+                );
+                useCdDeliveryPaymentStore.getState().clear();
+            },
+        });
+    };
+
+    const inferHospitalPurpose = (explicitPurpose?: HospitalPurpose): HospitalPurpose => {
+        if (explicitPurpose) return explicitPurpose;
+
+        const hospitalStore = useHospitalStore.getState();
+        const selectedCases = useCaseStore.getState().selectedCases;
+        if (hospitalStore.issueSourceHospital && selectedCases.length > 0) {
+            return "send-destination";
+        }
+        return "issue-source";
+    };
+
+    const handleSelectHospital = (payload: Hospital | SelectHospitalPayload) => {
+        const hospital = "hospital" in payload ? payload.hospital : payload;
+        const purpose = inferHospitalPurpose("hospital" in payload ? payload.purpose : undefined);
+        const selectedHospital = { id: hospital.id, name: hospital.name };
+
+        if (purpose === "send-destination") {
+            useHospitalStore.getState().setSendDestinationHospital(selectedHospital);
+            orchestrator.addHiddenMessage(`영상을 보낼 병원(등록/전송 신청 병원): ${hospital.name} (${hospital.id})`);
+            orchestrator.handleUserMessage(
+                `${hospital.name}을 영상을 보낼 병원으로 선택했습니다. 서울병원 등 목적지 병원의 영상 목록을 조회하지 마세요. ` +
+                    `이미 선택한 가져올 영상을 그대로 보낼 대상으로 사용하고, 다음 응답에는 추가 영상 선택 없이 purchase-imaging A2UI를 출력하세요.`,
+                { hidden: true },
+            );
+            return;
+        }
+
+        useHospitalStore.getState().setIssueSourceHospital(selectedHospital);
+        orchestrator.addHiddenMessage(`영상을 가져올 병원(발급 신청 병원): ${hospital.name} (${hospital.id})`);
         orchestrator.handleUserMessage(
-            "CD 발급 결제가 완료되었습니다. 현재 시나리오의 완료 안내만 하세요.",
+            `${hospital.name}을 영상을 가져올 병원으로 선택했습니다. 현재 시나리오의 다음 단계로 진행하세요.`,
             { hidden: true },
         );
     };
 
-    const handleSelectHospital = (hospital: Hospital) => {
-        orchestrator.addHiddenMessage(`선택된 병원: ${hospital.name} (${hospital.id})`);
-        orchestrator.handleUserMessage(
-            `${hospital.name}을 선택했습니다. 현재 시나리오의 다음 단계로 진행하세요.`,
-            { hidden: true },
-        );
+    const inferDestinationHospitalFromVisibleMessages = (sourceHospitalName?: string): Hospital | null => {
+        const visibleUserMessages = useChatStore.getState().messages
+            .filter((message) => message.role === "user" && !message.hidden)
+            .map((message) => message.content)
+            .reverse();
+
+        for (const content of visibleUserMessages) {
+            for (const hospital of knownHospitals) {
+                if (hospital.name === sourceHospitalName) continue;
+
+                const mentionsHospitalAsDestination =
+                    content.includes(`${hospital.name}으로`) ||
+                    content.includes(`${hospital.name}로`) ||
+                    content.includes(`${hospital.name}에`) ||
+                    content.includes(`${hospital.name}에게`);
+                const mentionsSending =
+                    content.includes("보내") ||
+                    content.includes("전송") ||
+                    content.includes("등록");
+
+                if (mentionsHospitalAsDestination && mentionsSending) {
+                    return hospital;
+                }
+            }
+        }
+
+        return null;
+    };
+
+    const showImageIssuanceCompletionStep = () => {
+        useChatStore.getState().addMessage({
+            id: generateId(),
+            role: "assistant",
+            content: "영상 가져오기가 완료되었습니다.",
+            timestamp: Date.now(),
+        });
+    };
+
+    const showTransferConsentStep = ({
+        sourceHospitalName,
+        destinationHospitalName,
+    }: {
+        sourceHospitalName?: string;
+        destinationHospitalName: string;
+    }) => {
+        const sourceText = sourceHospitalName
+            ? `${sourceHospitalName}에서 가져온 영상`
+            : "가져온 영상";
+
+        useChatStore.getState().addMessage({
+            id: generateId(),
+            role: "assistant",
+            content: `${sourceText}을 ${destinationHospitalName}으로 보내기 전에 전송 동의가 필요합니다.`,
+            timestamp: Date.now(),
+            a2uiBlocks: [
+                {
+                    type: "selected-images-list",
+                    props: {},
+                },
+                {
+                    type: "send-image-consent-form",
+                    props: {},
+                },
+            ],
+        });
     };
 
     const handlePurchaseImagingPayment = (payload: unknown) => {
-        orchestrator.addHiddenMessage(`제휴 병원 영상 발급 결제 정보: ${JSON.stringify(payload)}`);
-        orchestrator.handleUserMessage(
-            "제휴 병원 영상 발급 결제가 완료되었습니다. 현재 시나리오의 다음 단계로 진행하세요.",
-            { hidden: true },
-        );
+        // 영상 발급 결제는 영상 선택 완료(submit-hospital-images) 시점에 이미 생성되어 paymentStore에 있다.
+        // 여기서는 더미 결제 팝업(PurchasePopup)을 열고, "결제하기"를 누르면 결제 완료(PUT)를 진행한다.
+        const props = (payload ?? {}) as PurchaseImagingPayload;
+        const hospitalStore = useHospitalStore.getState();
+        const sourceHospitalName = props.sourceHospitalName ?? props.hospitalName;
+        if (!hospitalStore.issueSourceHospital && sourceHospitalName) {
+            hospitalStore.setIssueSourceHospital({ id: "", name: sourceHospitalName });
+        }
+        if (!hospitalStore.sendDestinationHospital && props.destinationHospitalName) {
+            hospitalStore.setSendDestinationHospital({ id: "", name: props.destinationHospitalName });
+        }
+
+        const refreshedHospitalStore = useHospitalStore.getState();
+        const refreshedSourceHospitalName =
+            refreshedHospitalStore.issueSourceHospital?.name ??
+            refreshedHospitalStore.hospital?.name ??
+            sourceHospitalName;
+        if (!refreshedHospitalStore.sendDestinationHospital) {
+            const inferredDestination = inferDestinationHospitalFromVisibleMessages(refreshedSourceHospitalName);
+            if (inferredDestination) {
+                refreshedHospitalStore.setSendDestinationHospital(inferredDestination);
+                orchestrator.addHiddenMessage(
+                    `사용자 원문에서 복구한 등록/전송 신청 병원(보낼 병원): ${inferredDestination.name} (${inferredDestination.id})`,
+                );
+            }
+        }
+
+        const payment = usePaymentStore.getState().payment;
+
+        // 결제 금액은 발급 결제가 알려준 확정 금액을 우선 사용하고, 없으면 props로 계산
+        const amount = payment?.price.totalFee ?? calculatePurchaseTotal(props);
+
+        usePaymentPopupStore.getState().open({
+            amount,
+            onConfirm: async () => {
+                // 영상 선택 단계에서 결제 생성이 실패했을 수 있으므로, 없으면 여기서 한 번 더 생성한다.
+                const current =
+                    usePaymentStore.getState().payment ??
+                    (await createImageIssuancePayment());
+
+                // 실제 결제 진행 -> 결제 완료 API 호출
+                const { ok, status } = await completeImagingPayment(current, getAccessToken);
+                if (!ok) {
+                    throw new Error(`결제 완료 실패 (status: ${status})`);
+                }
+
+                // 결제 성공(2xx) -> LLM에게 결제 완료 히든 메시지 전달
+                const finalHospitalStore = useHospitalStore.getState();
+                const sourceHospital = finalHospitalStore.issueSourceHospital ?? finalHospitalStore.hospital;
+                const destinationHospital = finalHospitalStore.sendDestinationHospital;
+                orchestrator.addHiddenMessage(
+                    [
+                        `제휴 병원 영상 발급 결제 완료: 결제 id ${current.id}, 결제 금액 ${current.price.totalFee}원`,
+                        sourceHospital ? `발급 신청 병원(가져올 병원): ${sourceHospital.name}` : null,
+                        destinationHospital ? `등록/전송 신청 병원(보낼 병원): ${destinationHospital.name}` : null,
+                    ].filter(Boolean).join("\n"),
+                );
+                usePaymentStore.getState().clear();
+                if (destinationHospital) {
+                    orchestrator.addHiddenMessage(
+                        "제휴 병원 영상 발급 결제가 완료되었습니다. 같은 선택 영상에 대해 등록/전송 신청도 이어서 완료 처리하고, 전송 동의 UI를 표시했습니다.",
+                    );
+                    showTransferConsentStep({
+                        sourceHospitalName: sourceHospital?.name,
+                        destinationHospitalName: destinationHospital.name,
+                    });
+                } else {
+                    orchestrator.addHiddenMessage(
+                        "제휴 병원 영상 발급 결제가 완료되었습니다. 사용자가 영상 보내기를 요청하지 않았으므로 보낼 병원 선택 UI를 표시하지 않습니다.",
+                    );
+                    showImageIssuanceCompletionStep();
+                }
+            },
+        });
     };
 
-    const handleDownloadImages = (imageIds: string[]) => {
+    const handleDownloadImages = (imageIds: string[], fileType: DownloadFileType) => {
         if (imageIds.length === 0) return;
 
-        orchestrator.addHiddenMessage(`다운로드 선택 영상 목록: ${imageIds.join(", ")}`);
+        orchestrator.addHiddenMessage(
+            `다운로드 선택 영상 목록: ${imageIds.join(", ")} / 파일 형식: ${fileType}`,
+        );
         orchestrator.handleUserMessage(
-            `${imageIds.length}건의 영상 다운로드가 완료되었습니다. 완료 안내만 하세요.`,
+            `downloadImage 툴을 "${fileType}" 형식으로 호출하세요.`,
             { hidden: true },
         );
     };
@@ -173,13 +539,14 @@ export function createA2UIHandler(orchestrator: Orchestrator) {
       case "submit-questions": handleSubmitQuestions(payload as QuestionResponse); break;
       case "select-images": handleSelectImages(payload as string); break;
       case "submit-images": handleSubmitImages(); break;
+      case "submit-hospital-images": handleSubmitHospitalImages(); break;
       case "remove-image":
       case "deselect-image": handleDeselctImages(payload as string); break;
       case "not-found": handleNotFoundImages(); break;
       case "refresh-code": handleRefreshCode(); break;
       // scenario-2
       case "submit-address-contact":
-        handleSubmitAddressContact(payload as AddressContactPayload);
+        void handleSubmitAddressContact(payload as AddressContactPayload);
         break;
       case "change-delivery-info":
         handleChangeDeliveryInfo();
@@ -188,7 +555,7 @@ export function createA2UIHandler(orchestrator: Orchestrator) {
         handleToggleMedicalConsent(payload as boolean);
         break;
       case "pay-cd-purchase":
-        handleCdPayment();
+        handleCdPayment(payload);
         break;
       // scenario-3
       case "select-hospital":
@@ -198,9 +565,14 @@ export function createA2UIHandler(orchestrator: Orchestrator) {
         handlePurchaseImagingPayment(payload);
         break;
       // scenario-7
-      case "download-images":
-        handleDownloadImages(payload as string[]);
+      case "download-images": {
+        const { imageIds, fileType } = payload as {
+          imageIds: string[];
+          fileType: DownloadFileType;
+        };
+        handleDownloadImages(imageIds, fileType);
         break;
+      }
       default: break;
     }
     console.log("[App] A2UI action:", action, payload);

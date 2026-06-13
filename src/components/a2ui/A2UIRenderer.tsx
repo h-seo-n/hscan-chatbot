@@ -1,6 +1,11 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { A2UIBlock } from "../../core/util/types/a2uiSchema";
 import type { Case } from "../../core/util/types/caseTypes";
+import { useCaseStore } from "../../core/util/caseStore";
+import { useCdDeliveryPaymentStore } from "../../core/util/cdDeliveryPaymentStore";
+import { useHospitalStore } from "../../core/util/hospitalStore";
+import { useAuth } from "../../core/util/auth/useAuth";
+import { createAuthenticatedFetch } from "../../core/util/auth/authFetch";
 
 // Scenario #1
 import ConsentForm from "./Scenario-1-Doc/ConsentForm";
@@ -18,16 +23,27 @@ import MedicalConsentForm from "./Scenario-2-CD/CDPurchaseCard/MedicalConsentFor
 
 // Scenario #3
 import HospitalListComponent, { type Hospital } from "./Scenario-3-Hosp/HospitalList";
+import HospitalImageList from "./Scenario-3-Hosp/HospitalImageList";
 import PurchaseImaging from "./Scenario-3-Hosp/PurchaseImaging";
 import PurchaseTable, { type PurchaseTableProps } from "./Scenario-3-Hosp/PurchaseImaging/PurchaseTable";
 
 // Scenario #7
 import DownloadImageList from "./Scenario-7-Down/DownloadImageList";
-import DetailModal from "./Scenario-7-Down/DetailModal";
+import DetailModalOverlay from "./Scenario-7-Down/DetailModal/DetailModalOverlay";
 
 interface A2UIRendererProps {
   block: A2UIBlock;
   onAction: (action: string, payload: unknown) => void;
+}
+
+// LLM이 \`props.cases\`를 비우거나 빈 배열로 보낸 경우 store에 hydrate된 cases를 사용
+function pickCases(
+  fromProps: Case[] | undefined,
+  fromStore: Case[] | undefined,
+): Case[] | undefined {
+  if (fromProps && fromProps.length > 0) return fromProps;
+  if (fromStore && fromStore.length > 0) return fromStore;
+  return undefined;
 }
 
 function MedicalConsentFormBlock({
@@ -60,7 +76,7 @@ function ClosableDetailModal({
   if (!open) return null;
 
   return (
-    <DetailModal
+    <DetailModalOverlay
       series={series}
       onClose={() => {
         setOpen(false);
@@ -71,10 +87,64 @@ function ClosableDetailModal({
 }
 
 export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
+  // MCP tool 결과로 hydrate된 case 목록 - LLM이 props.cases를 비워두면 이걸 사용
+  const hydratedCases = useCaseStore((s) => s.cases);
+  const fetchCases = useCaseStore((s) => s.fetchCases);
+  const cdDeliveryPayment = useCdDeliveryPaymentStore((s) => s.payment);
+  const issueSourceHospital = useHospitalStore((s) => s.issueSourceHospital);
+  const sendDestinationHospital = useHospitalStore((s) => s.sendDestinationHospital);
+  const fallbackCases = hydratedCases.length > 0 ? hydratedCases : undefined;
+  const { accessToken } = useAuth();
+  const cdDeliveryInfo = cdDeliveryPayment
+    ? {
+        address: cdDeliveryPayment.mailingAddress.baseAddress,
+        addressDetail: cdDeliveryPayment.mailingAddress.detailAddress,
+        name: cdDeliveryPayment.mailingAddress.receiverName ?? undefined,
+        tel: cdDeliveryPayment.mailingAddress.receiverPhone ?? undefined,
+        registeredMailCost: cdDeliveryPayment.price.amount,
+      }
+    : null;
+
+  // image-selector/download-selector는 내 계정 영상 목록(getImageList)을 필요로 한다.
+  // LLM이 블록 출력 전에 영상 목록 tool을 호출하지 않으면 store가 비어 영상이 표시되지
+  // 않으므로(첫 질문에서 "표시할 영상이 없습니다"가 뜨는 원인), 여기서 직접 /case를
+  // 조회해 store를 hydrate한다. LLM의 tool 호출 누락과 무관하게 항상 채워지도록 한다.
+  const isCaseSelector =
+    block.type === "image-selector" || block.type === "download-selector";
+  const propCases = isCaseSelector
+    ? (block.props as { cases?: Case[] }).cases
+    : undefined;
+  const needsFetch =
+    isCaseSelector &&
+    (!propCases || propCases.length === 0) &&
+    hydratedCases.length === 0;
+  const fetchAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    if (!needsFetch || !accessToken || fetchAttemptedRef.current) return;
+    // 한 인스턴스당 한 번만 시도 (결과가 빈 목록이어도 재요청 루프에 빠지지 않게)
+    fetchAttemptedRef.current = true;
+    const authFetch = createAuthenticatedFetch(() => accessToken);
+    void fetchCases(undefined, authFetch);
+  }, [needsFetch, accessToken, fetchCases]);
+
+  if (isCaseSelector) {
+    console.log(`[A2UIRenderer] ${block.type}`, {
+      propsCasesCount: propCases?.length ?? 0,
+      storeCasesCount: hydratedCases.length,
+      using:
+        propCases && propCases.length > 0
+          ? "props.cases"
+          : hydratedCases.length > 0
+            ? "store cases"
+            : "component fallback (mock)",
+    });
+  }
+
   switch (block.type) {
     case "show-doctor-video-consent-form":
       return (
-        <ConsentForm items={SHOW_DOCTOR_CONSENT_ITEMS} onConfirm={() => onAction("agree-show-doctor-consent", null)}/>
+        <ConsentForm items={SHOW_DOCTOR_CONSENT_ITEMS} onConfirm={() => onAction("show-doctor-video-consent-form", null)}/>
       );
 
     case "send-image-consent-form":
@@ -84,7 +154,8 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
 
     case "image-selector":
       return (
-        <ImageList 
+        <ImageList
+          cases={pickCases(block.props.cases as Case[] | undefined, fallbackCases)}
           onSelect={(caseId) => onAction("select-images", caseId)}
           onSubmit={() => onAction("submit-images", null)}
           onNotFound={() => onAction("not-found", null)}
@@ -132,11 +203,11 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
     case "delivery-info-card":
       return (
         <DeliverInfoCard
-          address={block.props.address}
-          addressDetail={block.props.addressDetail}
-          name={block.props.name}
-          tel={block.props.tel}
-          registeredMailCost={block.props.registeredMailCost}
+          address={block.props.address ?? cdDeliveryInfo?.address}
+          addressDetail={block.props.addressDetail ?? cdDeliveryInfo?.addressDetail}
+          name={block.props.name ?? cdDeliveryInfo?.name}
+          tel={block.props.tel ?? cdDeliveryInfo?.tel}
+          registeredMailCost={block.props.registeredMailCost ?? cdDeliveryInfo?.registeredMailCost}
           onChange={() => onAction("change-delivery-info", null)}
         />
       );
@@ -144,12 +215,12 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
     case "cd-purchase-card":
       return (
         <CDPurchaseCard
-          address={block.props.address}
-          addressDetail={block.props.addressDetail}
-          name={block.props.name}
-          tel={block.props.tel}
-          registeredMailCost={block.props.registeredMailCost}
-          onPayment={() => onAction("pay-cd-purchase", null)}
+          address={block.props.address ?? cdDeliveryInfo?.address}
+          addressDetail={block.props.addressDetail ?? cdDeliveryInfo?.addressDetail}
+          name={block.props.name ?? cdDeliveryInfo?.name}
+          tel={block.props.tel ?? cdDeliveryInfo?.tel}
+          registeredMailCost={block.props.registeredMailCost ?? cdDeliveryInfo?.registeredMailCost}
+          onPayment={() => onAction("pay-cd-purchase", block.props)}
         />
       );
 
@@ -157,7 +228,22 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
       return (
         <HospitalListComponent
           HospitalList={block.props.hospitals as Hospital[] | undefined}
-          onSubmit={(hospital) => onAction("select-hospital", hospital)}
+          onSubmit={(hospital) =>
+            onAction("select-hospital", {
+              hospital,
+              purpose: block.props.purpose,
+            })
+          }
+        />
+      );
+
+    case "hospital-image-selector":
+      return (
+        <HospitalImageList
+          cases={pickCases(block.props.cases as Case[] | undefined, fallbackCases)}
+          submitLabel={block.props.submitLabel}
+          onSelect={(caseId) => onAction("select-images", caseId)}
+          onSubmit={() => onAction("submit-hospital-images", null)}
         />
       );
 
@@ -165,6 +251,8 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
       return (
         <PurchaseImaging
           hospitalName={block.props.hospitalName}
+          sourceHospitalName={block.props.sourceHospitalName ?? block.props.hospitalName ?? issueSourceHospital?.name}
+          destinationHospitalName={block.props.destinationHospitalName ?? sendDestinationHospital?.name}
           selectedVideoCount={block.props.selectedVideoCount}
           issueCost={block.props.issueCost}
           agencyFee={block.props.agencyFee}
@@ -179,9 +267,9 @@ export default function A2UIRenderer({ block, onAction }: A2UIRendererProps) {
     case "download-selector":
       return (
         <DownloadImageList
-          cases={block.props.cases as Case[] | undefined}
+          cases={pickCases(block.props.cases as Case[] | undefined, fallbackCases)}
           submitLabel={block.props.submitLabel}
-          onSelect={(imageIds) => onAction("download-images", imageIds)}
+          onSelect={(imageIds, fileType) => onAction("download-images", { imageIds, fileType })}
           onNotFound={() => onAction("not-found", null)}
         />
       );

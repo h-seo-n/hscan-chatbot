@@ -9,6 +9,7 @@ import HomePage from "./components/Home/HomePage";
 // import AddressContactInfo from "./components/a2ui/Scenario-2-CD/AddressContactInfo";
 // import DeliverInfoCard from "./components/a2ui/Scenario-2-CD/CDPurchaseCard/DeliverInfoCard";
 import { createA2UIHandler } from "./components/a2ui/A2UIHandlers";
+import PurchasePopup from "./components/a2ui/Scenario-3-Hosp/PurchaseImaging/PurchasePopup";
 import { consoleLogger, sentryLogger } from "./core/util/logger";
 import { useAuth } from "./core/util/auth/useAuth";
 
@@ -99,7 +100,7 @@ function App() {
    * orchestrator.ts의 handleUserMessage() wrapper 
    * useCallback으로 re-render 최소화   
   */
-  const handleSendMessage = useCallback(async (text: string) => {
+  const handleSendMessage = useCallback(async (text: string):Promise<void> => {
     const orchestrator = orchestratorRef.current;
     if (!orchestrator) {
       appLogger.warn("Orchestrator가 아직 준비되지 않았습니다");
@@ -115,7 +116,6 @@ function App() {
   
   /**
    * 사용자가 출력 중단 시 handler
-   * -> TODO : handleAbort 다루는 중간 중단 버튼 필요
    */
   const handleAbort = useCallback(() => {
     orchestratorRef.current?.abort();
@@ -130,7 +130,10 @@ function App() {
         appLogger.warn("Orchestrator 준비 전 A2UI 액션이 발생했습니다");
       };
     }
-    return createA2UIHandler(orchestratorRef.current);
+    return createA2UIHandler(
+      orchestratorRef.current,
+      () => accessTokenRef.current,
+    );
   }, [initStatus.kind]);
 
   // 렌더링
@@ -155,6 +158,7 @@ function App() {
   return (
     <div>
        <HomePage handleSendMessage={handleSendMessage} handleA2UIAction={handleA2UIAction} handleAbort={handleAbort}/>
+       <PurchasePopup />
 	     {/* <QuestionForm questions={[]} />
       <ImageList 
         onSelect={(caseId) => handleA2UIAction("select-images", caseId)}

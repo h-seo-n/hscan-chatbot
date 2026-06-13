@@ -1,10 +1,9 @@
 .container {
-  width: 90%;
+  width: 100%;
   background: #ffffff;
   border: 1px solid #d6d6d6;
   border-radius: 15px;
   box-sizing: border-box;
-  overflow: hidden;
 }
 
 .content {
@@ -43,6 +42,16 @@
 .submitButton:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.emptyState {
+  align-self: center;
+  margin: 24px 0;
+  color: #6b7280;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: -0.04px;
+  text-align: center;
 }
 
 .emptyStateButton {
