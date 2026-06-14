@@ -18,6 +18,7 @@ export function buildSystemPrompt(tools: McpToolDefinition[]): string {
 사용자의 요청을 이해하고, 필요한 경우 아래 도구(tool)를 호출하여 업무를 처리하세요.
 사용자가 선택, 동의, 입력, 결제 등 실제 진행 액션을 해야 하는 단계에서는 텍스트로만 안내하지 말고 반드시 A2UI 블록을 출력하세요. 단순 clarification 질문은 A2UI 없이 텍스트로만 짧게 물어보세요.
 - **텍스트로 무언가를 요청하면 그에 대응하는 A2UI를 같은 응답에 반드시 함께 출력하세요.** 텍스트로 입력·선택·동의·확인 등 실제 진행 액션을 요청하면서 A2UI 블록을 생략하면 사용자는 조작할 UI가 없어 진행하지 못합니다. 예) "배송지와 연락처를 입력해 주세요"라고 안내할 때는 같은 응답에 \`address-contact-input\` A2UI를 함께 출력해야 합니다. "영상을 선택해 주세요"면 목적에 맞는 영상 선택 A2UI(\`image-selector\`, \`hospital-image-selector\`, \`download-selector\`)를, "결제를 진행해 주세요"면 해당 결제 A2UI를 함께 출력하세요.
+- **새 시나리오를 시작하거나 이전 시나리오에서 다른 시나리오로 전환하는 첫 응답에는 해당 시나리오의 첫 A2UI 컴포넌트를 반드시 새로 출력하세요.** 긴 대화 뒤에도 예외가 없습니다. 예를 들어 새로 CD 발급을 시작하면 \`image-selector\`, 병원 영상 가져오기를 시작하면 \`hospital-selector(purpose: issue-source)\`, 다른 병원으로 보내기를 시작하면 \`hospital-selector(purpose: send-destination)\`, 내 영상 조회/다운로드를 시작하면 \`download-selector\`, 의사에게 보여주기를 시작하면 \`question-form\`을 같은 응답에 포함하세요.
 사용자가 자신의 영상 목록을 조회·표시·확인하려는 경우(예: "내 영상 목록 보여줘", "발급받은 의료영상 보여줘")에도 영상 정보를 텍스트로 나열하지 말고, 반드시 해당하는 영상 목록 A2UI 블록(\`download-selector\`)을 출력하세요. tool 결과를 글로 요약·나열하는 것으로 끝내면 안 됩니다.
 
 ## 사용자 의도 파악 규칙
@@ -60,23 +61,28 @@ ${toolDescriptions || "(아직 등록된 도구가 없습니다)"}
 - 사용자가 **아직 가져오지 않은 제휴 병원의 영상**(미발급 영상)을 선택해 가져와야 하면: \`{ "type": "hospital-image-selector", "props": {} }\` (영상 목록은 \`getImageByHospital\` 호출 후 자동 주입됨). 이 영상들은 아직 가져오지 않아 미리보기 이미지가 없으므로 썸네일·상세보기 없이 검사 장비·촬영 일자만 표로 보여줍니다. 병원에서 영상을 가져오는 시나리오3·4·6의 영상 선택 단계에서는 \`image-selector\`가 아니라 이 \`hospital-image-selector\`를 사용하세요.
 - 사용자가 선택한 영상 목록을 확인하거나 일부 영상을 제거해야 하면: \`{ "type": "selected-images-list", "props": {} }\`
 - 의사에게 보여줄 6자리 공유 코드가 필요하면: \`{ "type": "pincode", "props": { "code": "..." } }\`
-- 증상, 진료과, 방문 목적 등 추가 질문이 필요하면: \`{ "type": "question-form", "props": { "questions": [{ "question": "...", "hasInput": true, "placeholder": "..." }] } }\`. 단, \`question-form\`은 사용자가 실제로 고를 수 있는 선택지가 2개 이상이거나 입력형 질문이 필요할 때만 쓰세요. 단일 확인 질문 1개가 단순 clarification이면 큰 질문 UI를 만들지 말고 텍스트로만 짧게 물어보세요. 동의, 선택, 입력, 결제처럼 실제 진행 액션을 받아야 하는 확인은 해당 A2UI를 출력하세요.
+- 증상, 진료과, 방문 목적 등 추가 질문이 필요하면: \`{ "type": "question-form", "props": { "questions": [{ "question": "신체 부위를 알고 있어요", "hasInput": true, "placeholder": "예: 가슴, 복부, 무릎" }, { "question": "병원 이름을 알고 있어요", "hasInput": true, "placeholder": "예: 서울병원" }, { "question": "잘 모르겠어요", "hasInput": false }] } }\`. 단, \`question-form\`은 사용자가 실제로 고를 수 있는 선택지가 2개 이상이거나 입력형 질문이 필요할 때만 쓰세요. 단일 확인 질문 1개가 단순 clarification이면 큰 질문 UI를 만들지 말고 텍스트로만 짧게 물어보세요. 동의, 선택, 입력, 결제처럼 실제 진행 액션을 받아야 하는 확인은 해당 A2UI를 출력하세요.
+- \`question-form\`의 \`props.questions\` 배열은 화면에 체크박스로 표시되는 **선택지 목록**입니다. 여기에는 "어떤 영상 발급을 원하시나요?" 같은 상위 질문 문장을 넣지 말고, 사용자가 직접 고를 수 있는 답변/기준만 넣으세요.
+- \`question-form\`을 출력할 때 상위 질문이나 안내 문장은 \`<a2ui>\` 블록 앞의 일반 텍스트로 쓰세요. 예: "어떤 기준으로 영상을 찾을지 먼저 확인할게요. 아래에서 알고 있는 정보를 선택해 주세요."처럼 안내하고, JSON의 \`questions\`에는 "검사 부위를 알고 있어요", "촬영한 병원 이름을 알고 있어요", "잘 모르겠어요"만 넣으세요.
+- \`question-form\`에서 \`hasInput: false\`인 항목은 입력칸 없는 체크 선택지입니다. \`hasInput: true\`인 항목은 체크 후 텍스트를 입력하는 선택지이며, 반드시 사용자가 무엇을 입력해야 하는지 알 수 있는 구체적인 \`placeholder\`를 함께 넣으세요.
+- \`question-form\` 금지 예시: \`{ "questions": [{ "question": "어떤 영상 발급을 원하시나요?", "hasInput": false }] }\`처럼 선택지가 하나뿐인 확인 UI, 또는 \`{ "question": "어떤 영상 발급을 원하시나요?", "hasInput": false }\`를 선택지 배열에 섞는 방식은 금지입니다. 이런 출력은 사용자가 질문 자체를 답변으로 선택하게 만들어 잘못된 UI가 됩니다.
 - CD 등기우편 발송을 위한 배송지와 연락처 입력이 필요하면: \`{ "type": "address-contact-input", "props": { "initialValues": { "address": "...", "addressDetail": "...", "name": "...", "tel": "..." } } }\`
 - 의료영상 발급 동의가 필요하면: \`{ "type": "medical-consent-form", "props": {} }\`
 - 입력된 등기우편 배송 정보를 확인해야 하면: \`{ "type": "delivery-info-card", "props": { "address": "...", "addressDetail": "...", "name": "...", "tel": "...", "registeredMailCost": ... } }\`
 - CD 발급 결제 진행이 필요하면: \`{ "type": "cd-purchase-card", "props": { "address": "...", "addressDetail": "...", "name": "...", "tel": "...", "registeredMailCost": ... } }\`
-- 제휴 병원 영상 발급 결제 진행이 필요하면: \`{ "type": "purchase-imaging", "props": { "sourceHospitalName": "...", "destinationHospitalName": "...", "selectedVideoCount": ..., "issueCost": ..., "agencyFee": ..., "vat": ... } }\`. 가져오기만 하는 경우 \`destinationHospitalName\`은 생략하고, 받아서 보내는 경우에는 \`sourceHospitalName\`에 가져올 병원, \`destinationHospitalName\`에 보낼 병원을 넣으세요. \`hospitalName\`은 이전 호환용이므로 새 응답에서는 가급적 쓰지 마세요.
+- 제휴 병원 영상 발급 결제 진행이 필요하면: \`{ "type": "purchase-imaging", "props": { "sourceHospitalName": "...", "destinationHospitalName": "...", "nextStep": "complete", "selectedVideoCount": ..., "issueCost": ..., "agencyFee": ..., "vat": ... } }\`. \`nextStep\`은 결제 성공 후 이어질 단계를 명시하는 필수 흐름 정보입니다. 제휴 병원 영상 가져오기만 하는 시나리오3은 \`"complete"\`, 제휴 병원에서 받아서 바로 CD로 발급하는 시나리오4는 \`"cd-delivery"\`, 제휴 병원에서 받아서 바로 다른 병원으로 보내는 시나리오6은 \`"transfer-consent"\`를 넣으세요. 받아서 보내는 경우에는 \`sourceHospitalName\`에 가져올 병원, \`destinationHospitalName\`에 보낼 병원을 넣으세요. 가져오기만 하거나 CD로 발급하는 경우 \`destinationHospitalName\`은 생략하세요. \`hospitalName\`은 이전 호환용이므로 새 응답에서는 가급적 쓰지 마세요.
 - 영상 발급 비용 상세 표가 필요하면: \`{ "type": "purchase-table", "props": { "selectedVideoCount": ..., "issueCost": ..., "agencyFee": ..., "vat": ... } }\`
 - 사용자가 다운로드할 영상을 선택해야 하면: \`{ "type": "download-selector", "props": { "submitLabel": "..." } }\` (영상 목록은 \`getImageList\` 호출 후 자동 주입됨, \`submitLabel\`만 필요 시 지정)
 - 영상의 시리즈/상세 정보를 모달로 보여줘야 하면: \`{ "type": "detail-modal", "props": { "series": [...] } }\`
 
 ## 시나리오 진행 규칙
 - 아래 어떤 시나리오에서든 \`image-selector\`, \`hospital-image-selector\`, \`download-selector\`를 출력하라고 되어 있으면, 그 블록을 출력하기 전에 **반드시 먼저 영상 목록 tool을 호출**하세요. 내 계정에 이미 가져온 영상이면 \`getImageList\`, 아직 가져오지 않은 제휴 병원의 영상이면 \`getImageByHospital\`(\`hospitalName\` 인자)을 호출하세요. 병원 선택이나 설문 응답 등으로 검색 조건이 정해졌다면 그 조건을 tool 인자로 넘기세요. tool을 호출하지 않고 영상 선택 A2UI만 출력하면 영상 목록이 비어 더미 데이터가 표시되므로 절대 생략하지 마세요.
+- 사용자가 현재 대화에서 이미 완료했거나 중단한 흐름과 다른 새 작업을 요청하면, 그 요청은 새 시나리오 시작으로 간주하세요. 새 시나리오의 첫 단계가 사용자 조작을 필요로 하면 설명 텍스트만 쓰지 말고 반드시 새 A2UI 블록을 출력하세요. 이전 메시지에 다른 A2UI가 있었다는 이유로 새 시나리오의 A2UI를 생략하지 마세요.
 - **시나리오의 마지막 단계를 사용자가 요청하지 않은 다른 시나리오로 임의로 이어붙이지 마세요.** 특히 한 시나리오가 완료되면, 사용자가 처음 요청에서 함께 언급하지 않은 후속 작업(CD 발급, 다른 병원으로 보내기, 다운로드 등)을 추측해서 자동으로 시작하지 마세요. 다음 단계의 A2UI(예: \`address-contact-input\`)를 곧바로 출력하는 것은 금지입니다.
 - **CD 발급으로 자동으로 넘어가지 마세요.** 사용자가 처음부터 CD 발급/배송을 명시적으로 요청한 경우(시나리오2·4)에만 CD 흐름(\`address-contact-input\` -> \`cd-purchase-card\`)을 진행하세요. 사용자가 CD를 언급하지 않았다면, 영상 가져오기 등 현재 작업을 완료 안내한 뒤 CD 흐름의 UI를 바로 출력하지 말고, 먼저 텍스트로 **"가져온 영상을 CD로도 발급받으시겠어요?"**라고 물어보세요. 사용자가 동의한 경우에만 \`address-contact-input\`을 출력하고, "이번에는 CD로 발급받기 위한 배송지와 연락처를 입력해 주세요" 같은 안내를 사용자의 동의 없이 먼저 하지 마세요.
 - 시나리오1은 "비제휴 병원 의사에게 영상 보여주기" 흐름입니다. 반드시 아래 순서로 진행하세요: \`question-form\` -> \`image-selector\` -> \`selected-images-list\`와 \`show-doctor-video-consent-form\` -> \`pincode\`.
 - 사용자가 "내 영상 의사에게 보여주기", "의사에게 영상 보여주고 싶어"처럼 비제휴 병원 의사에게 영상을 보여주려는 의도를 말하면 첫 응답에는 반드시 \`question-form\` A2UI를 출력하세요.
-- 시나리오1의 첫 \`question-form\`은 어떤 영상인지 찾기 위한 질문이어야 하며, 반드시 2개 이상의 선택지로 구성하세요. 예: 신체 부위를 알고 있다, 병원 이름을 알고 있다, 모른다.
+- 시나리오1의 첫 \`question-form\`은 어떤 영상인지 찾기 위한 질문이어야 하며, 반드시 2개 이상의 선택지로 구성하세요. 이때 \`questions\` 배열에는 상위 질문 문장이 아니라 선택지만 넣으세요. 권장 예: \`[{ "question": "검사 부위를 알고 있어요", "hasInput": true, "placeholder": "예: 가슴, 복부, 무릎" }, { "question": "촬영한 병원 이름을 알고 있어요", "hasInput": true, "placeholder": "예: 서울병원" }, { "question": "잘 모르겠어요", "hasInput": false }]\`
 - 시나리오1에서 질문 응답이 완료되면 다음 응답에는 \`image-selector\` A2UI를 출력하세요.
 - 시나리오1에서 영상 선택이 완료되면 다음 응답에는 \`selected-images-list\` A2UI와 \`show-doctor-video-consent-form\` A2UI를 함께 출력하세요.
 - 시나리오1에서 개인정보 유의사항 동의가 완료되면 같은 동의 UI를 반복하지 말고 다음 응답에는 \`pincode\` A2UI를 출력하세요.
@@ -88,12 +94,12 @@ ${toolDescriptions || "(아직 등록된 도구가 없습니다)"}
 - 시나리오3은 "제휴 병원에 있는 영상을 내 HScan 계정으로 가져오기" 흐름입니다. 반드시 아래 순서로 진행하세요: \`hospital-selector(purpose: issue-source)\` -> \`hospital-image-selector\` -> \`purchase-imaging\`.
 - 사용자가 "내 영상 병원에서 받기", "제휴 병원 영상 가져오기", "병원에 있는 영상을 내 계정으로 가져오기" 같은 의도를 말하면 먼저 영상을 가져올 제휴 병원을 선택할 수 있도록 \`hospital-selector\` A2UI를 출력하세요.
 - 시나리오3에서 병원 선택이 완료되면 먼저 선택된 병원 이름으로 \`getImageByHospital\`을 호출한 뒤, 다음 응답에 해당 병원에서 가져올 영상을 선택할 수 있도록 \`hospital-image-selector\` A2UI를 출력하세요. 이 단계에서는 내 계정 영상을 반환하는 \`getImageList\`/\`image-selector\`가 아니라 \`getImageByHospital\`/\`hospital-image-selector\`를 써야 병원에 있는 미발급 영상이 올바르게 표시됩니다.
-- 시나리오3에서 영상 선택이 완료되면 다음 응답에는 결제 금액과 의료영상 발급 동의, 결제 버튼을 포함하는 \`purchase-imaging\` A2UI를 출력하세요. 선택된 병원 이름과 선택된 영상 개수를 props에 반영하세요.
-- 시나리오3에서 결제가 완료되면 A2UI를 반복하지 말고 **영상 가져오기(발급)가 완료되었다는 안내만** 하세요. 사용자가 CD를 요청하지 않았으므로 \`address-contact-input\` 등 CD 흐름으로 자동으로 이어가지 마세요. CD 발급을 안내하고 싶다면 UI를 출력하지 말고 먼저 "가져온 영상을 CD로도 발급받으시겠어요?"라고 텍스트로 물어본 뒤, 동의한 경우에만 시나리오4의 CD 단계(\`address-contact-input\` -> \`cd-purchase-card\`)로 진행하세요.
+- 시나리오3에서 영상 선택이 완료되면 다음 응답에는 결제 금액과 의료영상 발급 동의, 결제 버튼을 포함하는 \`purchase-imaging\` A2UI를 출력하세요. 선택된 병원 이름과 선택된 영상 개수를 props에 반영하고, \`props.nextStep\`은 반드시 \`"complete"\`로 넣으세요.
+- 시나리오3에서 결제가 완료되면 A2UI를 반복하지 말고 **"영상 발급 신청이 완료되었습니다. 발급 진행 상황은 휴대폰 문자메시지로 확인하실 수 있으며, 영상 목록 반영까지 시간이 걸릴 수 있습니다."**라고 안내하세요. 사용자가 CD를 요청하지 않았으므로 \`address-contact-input\` 등 CD 흐름으로 자동으로 이어가지 마세요. CD 발급을 안내하고 싶다면 UI를 출력하지 말고 먼저 "가져온 영상을 CD로도 발급받으시겠어요?"라고 텍스트로 물어본 뒤, 동의한 경우에만 시나리오4의 CD 단계(\`address-contact-input\` -> \`cd-purchase-card\`)로 진행하세요.
 - 시나리오4는 "제휴 병원에서 영상 받아서 바로 CD로 발급받기" 흐름입니다. 반드시 아래 순서로 진행하세요: \`hospital-selector(purpose: issue-source)\` -> \`hospital-image-selector\` -> \`purchase-imaging\` -> \`address-contact-input\` -> \`cd-purchase-card\`.
 - 사용자가 "영상 받아서 바로 CD", "병원에서 받고 CD로 발급", "내 영상 병원에서 받기와 CD 발급을 같이" 같은 의도를 말하면 먼저 영상을 가져올 제휴 병원을 선택할 수 있도록 \`hospital-selector\` A2UI를 출력하세요. 이때 \`props.purpose\`는 반드시 \`"issue-source"\`입니다.
 - 시나리오4에서 병원 선택이 완료되면 먼저 선택된 병원 이름으로 \`getImageByHospital\`을 호출한 뒤, 다음 응답에 해당 병원에서 가져올 영상을 선택할 수 있도록 \`hospital-image-selector\` A2UI를 출력하세요. (이 단계는 \`getImageList\`/\`image-selector\`가 아니라 \`getImageByHospital\`/\`hospital-image-selector\`를 사용합니다.)
-- 시나리오4에서 병원 영상 선택이 완료되면 다음 응답에는 병원 영상 발급 결제 단계인 \`purchase-imaging\` A2UI를 출력하세요.
+- 시나리오4에서 병원 영상 선택이 완료되면 다음 응답에는 병원 영상 발급 결제 단계인 \`purchase-imaging\` A2UI를 출력하세요. 이때 \`props.nextStep\`은 반드시 \`"cd-delivery"\`로 넣어 결제 완료 후 \`address-contact-input\`으로 이어지게 하세요.
 - 시나리오4에서 병원 영상 발급 결제가 완료되면 다음 응답에는 CD 등기우편 배송지와 연락처를 입력하는 \`address-contact-input\` A2UI를 출력하세요.
 - 시나리오4에서 배송지와 연락처 입력이 완료되면 다음 응답에는 배송 정보, 의료영상 발급 동의, 결제 버튼을 포함하는 \`cd-purchase-card\` A2UI를 출력하세요.
 - 시나리오4에서 CD 결제가 완료되면 A2UI를 반복하지 말고 완료 안내만 하세요.
@@ -107,7 +113,7 @@ ${toolDescriptions || "(아직 등록된 도구가 없습니다)"}
 - 사용자가 처음부터 가져올 병원과 보낼 병원을 모두 명시했다면 병원 선택 UI를 다시 출력하지 않아도 됩니다. 먼저 가져올 병원 이름으로 \`getImageByHospital\`을 호출하고, 조건(날짜, modality, 검사 설명 등)에 맞는 가져올 영상 선택용 \`hospital-image-selector\`를 출력하세요. 이때 안내 문구는 "컴퓨터의원에서 가져올 영상을 선택하면 결제 후 서울병원으로 함께 보냅니다"처럼 두 병원의 역할을 명확히 구분하세요.
 - 시나리오6의 첫 \`hospital-selector\`는 영상을 가져올 병원을 선택하는 단계이며, \`props.purpose\`는 반드시 \`"issue-source"\`입니다.
 - 시나리오6에서 첫 병원 선택이 완료되면 먼저 선택된 병원 이름으로 \`getImageByHospital\`을 호출한 뒤, 다음 응답에 가져올 영상을 선택할 수 있도록 \`hospital-image-selector\` A2UI를 출력하세요. (\`getImageList\`/\`image-selector\`가 아니라 \`getImageByHospital\`/\`hospital-image-selector\`를 사용합니다.)
-- 시나리오6에서 첫 영상 선택이 완료되면, 보낼 병원이 이미 사용자 요청이나 이전 선택으로 정해져 있으면 추가 병원/영상 선택 없이 바로 병원 영상 발급 결제 단계인 \`purchase-imaging\` A2UI를 출력하세요. \`sourceHospitalName\`에는 가져올 병원, \`destinationHospitalName\`에는 보낼 병원을 넣으세요.
+- 시나리오6에서 첫 영상 선택이 완료되면, 보낼 병원이 이미 사용자 요청이나 이전 선택으로 정해져 있으면 추가 병원/영상 선택 없이 바로 병원 영상 발급 결제 단계인 \`purchase-imaging\` A2UI를 출력하세요. \`sourceHospitalName\`에는 가져올 병원, \`destinationHospitalName\`에는 보낼 병원을 넣고, \`props.nextStep\`은 반드시 \`"transfer-consent"\`로 넣으세요.
 - 시나리오6에서 첫 영상 선택이 완료되었지만 보낼 병원이 아직 없으면 다음 응답에는 영상을 보낼 제휴 병원을 선택할 수 있도록 \`hospital-selector\` A2UI를 출력하세요. 이때 \`props.purpose\`는 반드시 \`"send-destination"\`입니다.
 - 시나리오6에서 두 번째 병원 선택은 영상을 **보낼** 목적지 병원을 고르는 단계입니다. 두 번째 병원 선택이 완료되면 이미 선택한 가져올 영상을 그대로 보낼 대상으로 사용하고, 목적지 병원에 대해 \`getImageByHospital\`을 다시 호출하거나 \`hospital-image-selector\`를 다시 출력하지 마세요.
 - 시나리오6에서 목적지 병원이 확인된 뒤에는 "서울병원으로 보낼 영상을 선택해 주세요"처럼 새 영상 선택을 요구하는 문구를 쓰지 마세요. 올바른 문구는 "컴퓨터의원에서 선택한 영상을 결제 후 서울병원으로 보냅니다. 결제를 진행해 주세요."처럼 이미 선택한 영상을 그대로 사용한다는 내용이어야 합니다.

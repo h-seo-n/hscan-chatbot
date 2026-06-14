@@ -58,6 +58,7 @@ const HospitalSchema = z.object({
 }).strict();
 
 const HospitalPurposeSchema = z.enum(["issue-source", "send-destination"]);
+const PurchaseImagingNextStepSchema = z.enum(["complete", "cd-delivery", "transfer-consent"]);
 
 /* Scenario #2 - CD 등기우편 발송 */
 const AddressContactInputBlock = z.object({
@@ -123,6 +124,7 @@ const PurchaseImagingBlock = z.object({
     hospitalName: z.string().optional(),
     sourceHospitalName: z.string().optional(),
     destinationHospitalName: z.string().optional(),
+    nextStep: PurchaseImagingNextStepSchema.optional(),
     selectedVideoCount: PriceValueSchema.optional(),
     issueCost: PriceValueSchema.optional(),
     agencyFee: PriceValueSchema.optional(),

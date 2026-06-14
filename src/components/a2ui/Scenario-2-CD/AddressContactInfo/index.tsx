@@ -21,13 +21,6 @@ interface AddressContactInfoProps {
   initialValues?: AddressContactInfoInitialValues;
 }
 
-const fallbackAddressContactInfo: Required<AddressContactInfoInitialValues> = {
-  address: "서울특별시 강남구 테헤란로 123",
-  addressDetail: "삼성동 123-45",
-  name: "홍길동",
-  tel: "010-1234-5678",
-};
-
 const SearchIcon = () => <FiSearch aria-hidden="true" className={styles.searchIcon} />;
 
 export default function AddressContactInfo({
@@ -39,15 +32,10 @@ export default function AddressContactInfo({
   const nameId = useId();
   const telId = useId();
 
-  const initial = {
-    ...fallbackAddressContactInfo,
-    ...initialValues,
-  };
-
-  const [address, setAddress] = useState(initial.address);
-  const [addressDetail, setAddressDetail] = useState(initial.addressDetail);
-  const [name, setName] = useState(initial.name);
-  const [tel, setTel] = useState(initial.tel);
+  const [address, setAddress] = useState(initialValues?.address ?? "");
+  const [addressDetail, setAddressDetail] = useState(initialValues?.addressDetail ?? "");
+  const [name, setName] = useState(initialValues?.name ?? "");
+  const [tel, setTel] = useState(initialValues?.tel ?? "");
 
   const isComplete =
     address.trim().length > 0 &&
