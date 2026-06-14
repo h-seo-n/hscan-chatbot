@@ -111,6 +111,24 @@ interface DownloadInfo {
   fileName?: string;
 }
 
+const A2UI_RUNTIME_REMINDER = [
+  "응답 직전 A2UI 점검:",
+  "사용자가 선택, 동의, 입력, 결제, 목록 조회처럼 조작할 UI가 필요한 단계를 요청했다면 텍스트만 출력하지 말고 반드시 해당 A2UI 블록을 같은 응답에 포함하세요.",
+  "긴 대화 뒤 새 시나리오를 시작하거나 다른 시나리오로 전환하는 경우에도 새 시나리오의 첫 A2UI 컴포넌트를 새로 출력해야 합니다.",
+  "단순히 의도가 불명확해서 되묻는 clarification 질문만 A2UI 없이 텍스트로 답하세요.",
+].join(" ");
+
+function appendRenderedA2UIHistory(
+  content: string,
+  a2uiBlocks: ChatMessage["a2uiBlocks"],
+): string {
+  if (!a2uiBlocks || a2uiBlocks.length === 0) return content;
+
+  const renderedTypes = a2uiBlocks.map((block) => block.type).join(", ");
+  const suffix = `[이전 assistant 응답에서 실제 렌더링된 A2UI: ${renderedTypes}]`;
+  return content ? `${content}\n\n${suffix}` : suffix;
+}
+
 /**
  * downloadImage tool 결과에서 다운로드 정보를 추출한다.
  * 서버는 downloadUrl(과 fileName)을 돌려주고, 실제 다운로드는 클라이언트가
@@ -600,7 +618,7 @@ export class Orchestrator {
         const hasToolCalls = !!msg.toolCalls && msg.toolCalls.length > 0;
         const assistantMsg: LLMRequestMessage = {
           role: "assistant",
-          content: hasToolCalls ? "" : msg.content,
+          content: hasToolCalls ? "" : appendRenderedA2UIHistory(msg.content, msg.a2uiBlocks),
         };
         if (hasToolCalls) {
           (assistantMsg as LLMRequestMessage & {
@@ -626,6 +644,8 @@ export class Orchestrator {
         });
       }
     }
+
+    messages.push({ role: "system", content: A2UI_RUNTIME_REMINDER });
 
     return messages;
   }

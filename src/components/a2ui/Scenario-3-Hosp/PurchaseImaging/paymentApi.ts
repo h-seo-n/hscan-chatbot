@@ -41,57 +41,24 @@ async function apiPost<T>(
   endpoint: string,
   body: unknown,
   getAccessToken: AccessTokenProvider,
+  headers?: HeadersInit,
 ): Promise<T> {
   const authFetch = createAuthenticatedFetch(getAccessToken);
   const res = await authFetch(apiUrl(endpoint), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
   });
   return parseResponse<T>(res, "POST", endpoint);
 }
 
-/* ---- 병원/검사/가격 타입 (hscan-mcp-server types.ts에서 포팅) ------------------- */
+/* ---- 병원/검사/가격 타입 ------------------------------------------------------- */
 
-export type ModalityKey =
-  | "CT" | "MR" | "CR" | "DX" | "ECG" | "ES"
-  | "MG" | "NM" | "PET" | "RF" | "US" | "XA"
-  | "XC" | "PX" | "OCT" | "IVOCT" | "IVUS";
-
-interface ModalityConfig {
-  virtualSize: number;
-}
-
-interface VolumeUnit {
-  name: string;
-  virtualVolume: number;
-  volume: number;
-  price: number;
-  taxFree: number;
-  unit: string;
-}
-
-interface SimplePrice {
-  type: "SIMPLE";
-  amount: number;
-  taxFree: number;
-}
-
-interface Volume2Price {
-  type: "VOLUME2";
-  units: VolumeUnit[];
-  modalities: Partial<Record<ModalityKey, ModalityConfig>>;
-  defaultOption: ModalityConfig;
-  useExpectedPrice: boolean;
-}
-
-type HospitalPrice = SimplePrice | Volume2Price;
-
-/** GET /hospital 응답 항목 (가격 정책 포함) */
-export interface HospitalWithPrice {
+/** GET /hospital 응답 항목 */
+export interface HospitalInfo {
   id: string;
   name: string;
-  price: HospitalPrice;
+  price?: unknown;
 }
 
 /** GET /hospital/{id}/study 응답 항목 (아직 가져오지 않은 병원 검사) */
@@ -104,10 +71,32 @@ export interface HospitalStudy {
   numImages: number;
 }
 
+interface FeeInfo {
+  amount: number;
+  taxFree: number;
+  refundableAmount: number;
+  refundableTaxFree: number;
+}
+
+interface StudyPaymentPrice {
+  perHospitalPrice: Record<string, { onlinePrice: object }>;
+  perHospitalFee: Record<string, FeeInfo>;
+  deliveryFee: FeeInfo;
+  totalFee: number;
+  refundableFee: number;
+  taxFree: number;
+  refundableTaxFree: number;
+}
+
+interface StudyPaymentRequestBody {
+  requestStudies: Record<string, HospitalStudy[]>;
+  mailingIncluded: boolean;
+}
+
 export function getHospitals(
   getAccessToken: AccessTokenProvider,
-): Promise<HospitalWithPrice[]> {
-  return apiGet<HospitalWithPrice[]>("hospital", getAccessToken);
+): Promise<HospitalInfo[]> {
+  return apiGet<HospitalInfo[]>("hospital", getAccessToken);
 }
 
 export function getStudiesByHospital(
@@ -117,55 +106,32 @@ export function getStudiesByHospital(
   return apiGet<HospitalStudy[]>(`hospital/${hospitalId}/study`, getAccessToken);
 }
 
-/** 병원 가격 정책 + 단일 검사 정보로 결제 금액을 계산한다. */
-function calculateStudyPrice(hospital: HospitalWithPrice, study: HospitalStudy): number {
-  const price = hospital.price;
-  if (price.type === "SIMPLE") {
-    return price.amount;
-  }
-
-  const sortedUnits = [...price.units].sort((a, b) => a.virtualVolume - b.virtualVolume);
-
-  if (!price.useExpectedPrice) {
-    const sortedByVolume = [...price.units].sort((a, b) => a.volume - b.volume);
-    const totalVolume = Math.max(0, study.numImages ?? 0);
-    const unit =
-      sortedByVolume.find((u) => u.volume >= totalVolume) ??
-      sortedByVolume[sortedByVolume.length - 1];
-
-    return unit.price;
-  }
-
-  const totalVirtualSize = study.modalities.reduce((sum, modality) => {
-    const config = price.modalities[modality as ModalityKey] ?? price.defaultOption;
-    return sum + config.virtualSize;
-  }, 0);
-
-  const unit =
-    sortedUnits.find((u) => u.virtualVolume >= totalVirtualSize) ??
-    sortedUnits[sortedUnits.length - 1];
-
-  return unit.price;
-}
-
-function calculateTotalPrice(hospital: HospitalWithPrice, studies: HospitalStudy[]): number {
-  return studies.reduce(
-    (total, study) => total + calculateStudyPrice(hospital, study),
-    0,
+async function getStudyPaymentPrice(
+  body: StudyPaymentRequestBody,
+  getAccessToken: AccessTokenProvider,
+  registration?: string,
+): Promise<StudyPaymentPrice> {
+  const headers = registration ? { Registration: registration } : undefined;
+  return apiPost<StudyPaymentPrice>(
+    "hospital/study/payment/price",
+    body,
+    getAccessToken,
+    headers,
   );
 }
 
 /**
  * 제휴 병원 영상 발급 결제 "생성".
  *
- * 선택한 병원의 검사 목록(GET /hospital/{id}/study)과 병원 가격 정책(GET /hospital)을
- * 조회해, 선택한 studyInstanceUID들에 해당하는 검사로 결제(POST /hospital/study/payment)를
- * 생성하고 결제 정보(결제 id + 확정 금액)를 반환한다. 실제 완료(PUT)는 별도다.
+ * 선택한 병원의 검사 목록(GET /hospital/{id}/study)을 조회하고 가격 확인
+ * (POST /hospital/study/payment/price)에서 받은 totalFee로 결제 준비
+ * (POST /hospital/study/payment)를 생성한다. 실제 완료(PUT)는 별도다.
  */
 export async function requestImageIssuance(args: {
   hospitalId?: string;
   hospitalName?: string;
   studyInstanceUIDs: string[];
+  registration?: string;
   getAccessToken: AccessTokenProvider;
 }): Promise<StudyPayment> {
   const hospitals = await getHospitals(args.getAccessToken);
@@ -192,13 +158,20 @@ export async function requestImageIssuance(args: {
     );
   }
 
-  const price = calculateTotalPrice(hospital, requestStudies);
-  const priceBreakdown = requestStudies.map((study) => ({
-    studyInstanceUID: study.studyInstanceUID,
-    modalities: study.modalities,
-    numImages: study.numImages,
-    price: calculateStudyPrice(hospital, study),
-  }));
+  const paymentRequestBody = {
+    mailingIncluded: false,
+    requestStudies: { [hospital.id]: requestStudies },
+  } satisfies StudyPaymentRequestBody;
+  const priceInfo = await getStudyPaymentPrice(
+    paymentRequestBody,
+    args.getAccessToken,
+    args.registration,
+  );
+  const price = priceInfo.totalFee;
+  if (!Number.isFinite(price)) {
+    throw new Error(`가격 확인 API 응답 totalFee가 올바르지 않습니다: ${String(price)}`);
+  }
+
   const missingStudyInstanceUIDs = uniqueStudyInstanceUIDs.filter(
     (uid) => !requestStudies.some((study) => study.studyInstanceUID === uid),
   );
@@ -209,8 +182,8 @@ export async function requestImageIssuance(args: {
     requestedStudyCount: uniqueStudyInstanceUIDs.length,
     matchedStudyCount: requestStudies.length,
     missingStudyInstanceUIDs,
-    useExpectedPrice: hospital.price.type === "VOLUME2" ? hospital.price.useExpectedPrice : null,
-    priceBreakdown,
+    perHospitalFee: priceInfo.perHospitalFee,
+    deliveryFee: priceInfo.deliveryFee,
     mailingIncluded: false,
     price,
   });
@@ -218,9 +191,8 @@ export async function requestImageIssuance(args: {
   return apiPost<StudyPayment>(
     "hospital/study/payment",
     {
-      mailingIncluded: false,
+      ...paymentRequestBody,
       price,
-      requestStudies: { [hospital.id]: requestStudies },
     },
     args.getAccessToken,
   );

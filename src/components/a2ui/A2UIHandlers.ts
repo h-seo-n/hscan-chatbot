@@ -39,6 +39,7 @@ interface PurchaseImagingPayload extends Partial<PurchaseTableProps> {
     hospitalName?: string;
     sourceHospitalName?: string;
     destinationHospitalName?: string;
+    nextStep?: "complete" | "cd-delivery" | "transfer-consent";
 }
 
 const knownHospitals: Hospital[] = [
@@ -170,8 +171,10 @@ export function createA2UIHandler(
         const nextStepInstruction = destinationHospital
             ? `다음 단계로 결제 금액과 의료영상 발급 동의, 결제 버튼이 포함된 purchase-imaging A2UI를 출력하세요. ` +
                 `sourceHospitalName은 "${sourceHospital?.name ?? ""}", destinationHospitalName은 "${destinationHospital.name}"으로 넣고, ` +
-                `보낼 영상은 이미 선택된 같은 영상이므로 병원이나 영상을 다시 선택하게 하지 마세요.`
-            : `다음 단계로 결제 금액과 의료영상 발급 동의, 결제 버튼이 포함된 purchase-imaging A2UI를 출력하세요.`;
+                `nextStep은 "transfer-consent"로 넣으세요. 보낼 영상은 이미 선택된 같은 영상이므로 병원이나 영상을 다시 선택하게 하지 마세요.`
+            : `다음 단계로 결제 금액과 의료영상 발급 동의, 결제 버튼이 포함된 purchase-imaging A2UI를 출력하세요. ` +
+                `현재 시나리오가 제휴 병원에서 받아서 바로 CD로 발급받기라면 nextStep은 "cd-delivery"로 넣고, ` +
+                `제휴 병원 영상 가져오기만이라면 nextStep은 "complete"로 넣으세요.`;
 
         orchestrator.handleUserMessage(
             `제휴 병원에서 ${selected.length}건의 영상을 가져오기로 선택했습니다.${feeInfo} ` +
@@ -402,8 +405,27 @@ export function createA2UIHandler(
         useChatStore.getState().addMessage({
             id: generateId(),
             role: "assistant",
-            content: "영상 가져오기가 완료되었습니다.",
+            content: "영상 발급 신청이 완료되었습니다. 발급 진행 상황은 휴대폰 문자메시지로 확인하실 수 있으며, 영상 목록 반영까지 시간이 걸릴 수 있습니다.",
             timestamp: Date.now(),
+        });
+    };
+
+    const showCdDeliveryAddressStep = ({ sourceHospitalName }: { sourceHospitalName?: string }) => {
+        const sourceText = sourceHospitalName
+            ? `${sourceHospitalName}에서 가져온 영상`
+            : "가져온 영상";
+
+        useChatStore.getState().addMessage({
+            id: generateId(),
+            role: "assistant",
+            content: `${sourceText}을 CD로 발급받기 위해 등기우편 배송지와 연락처를 입력해 주세요.`,
+            timestamp: Date.now(),
+            a2uiBlocks: [
+                {
+                    type: "address-contact-input",
+                    props: {},
+                },
+            ],
         });
     };
 
@@ -487,11 +509,15 @@ export function createA2UIHandler(
                 const finalHospitalStore = useHospitalStore.getState();
                 const sourceHospital = finalHospitalStore.issueSourceHospital ?? finalHospitalStore.hospital;
                 const destinationHospital = finalHospitalStore.sendDestinationHospital;
+                const nextStep = props.nextStep ?? (destinationHospital ? "transfer-consent" : "complete");
+                const shouldContinueToCdDelivery = nextStep === "cd-delivery";
                 orchestrator.addHiddenMessage(
                     [
                         `제휴 병원 영상 발급 결제 완료: 결제 id ${current.id}, 결제 금액 ${current.price.totalFee}원`,
                         sourceHospital ? `발급 신청 병원(가져올 병원): ${sourceHospital.name}` : null,
                         destinationHospital ? `등록/전송 신청 병원(보낼 병원): ${destinationHospital.name}` : null,
+                        `결제 후 다음 단계: ${nextStep}`,
+                        shouldContinueToCdDelivery ? "후속 작업: CD 등기우편 발급" : null,
                     ].filter(Boolean).join("\n"),
                 );
                 usePaymentStore.getState().clear();
@@ -502,6 +528,13 @@ export function createA2UIHandler(
                     showTransferConsentStep({
                         sourceHospitalName: sourceHospital?.name,
                         destinationHospitalName: destinationHospital.name,
+                    });
+                } else if (shouldContinueToCdDelivery) {
+                    orchestrator.addHiddenMessage(
+                        "제휴 병원 영상 발급 결제가 완료되었습니다. 사용자가 CD 발급을 함께 요청했으므로 시나리오4의 다음 단계인 배송지/연락처 입력 UI를 표시했습니다.",
+                    );
+                    showCdDeliveryAddressStep({
+                        sourceHospitalName: sourceHospital?.name,
                     });
                 } else {
                     orchestrator.addHiddenMessage(
