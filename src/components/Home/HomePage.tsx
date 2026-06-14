@@ -49,8 +49,8 @@ const HomePage = ({ handleSendMessage, handleA2UIAction, handleAbort }: HomePage
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    const handleActionClick = (id: string) => {
-        console.log(`Action clicked: ${id}`);
+    const handleActionClick = (label: string) => {
+        handleSendMessage(label);
     };
 
     return (
@@ -76,7 +76,7 @@ const HomePage = ({ handleSendMessage, handleA2UIAction, handleAbort }: HomePage
                 key={item.id}
                 iconUrl={item.iconUrl}
                 label={item.label}
-                onClick={() => handleActionClick(item.id)}
+                onClick={() => handleActionClick(item.label)}
                 />
             ))}
             </section>
