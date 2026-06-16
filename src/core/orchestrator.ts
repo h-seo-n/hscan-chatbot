@@ -114,6 +114,8 @@ interface DownloadInfo {
 const A2UI_RUNTIME_REMINDER = [
   "응답 직전 A2UI 점검:",
   "사용자가 선택, 동의, 입력, 결제, 목록 조회처럼 조작할 UI가 필요한 단계를 요청했다면 텍스트만 출력하지 말고 반드시 해당 A2UI 블록을 같은 응답에 포함하세요.",
+  "사용자의 짧은 긍정 답변(응/네/좋아/진행해/해줘)은 직전 assistant 질문의 승인으로 해석하고, 승인 후 다음 단계가 A2UI라면 즉시 그 A2UI를 출력하세요.",
+  "직전 질문이 제휴 병원에서 영상 가져오기 여부였고 사용자가 긍정했다면 hospital-selector(purpose: issue-source)를 출력하세요.",
   "긴 대화 뒤 새 시나리오를 시작하거나 다른 시나리오로 전환하는 경우에도 새 시나리오의 첫 A2UI 컴포넌트를 새로 출력해야 합니다.",
   "단순히 의도가 불명확해서 되묻는 clarification 질문만 A2UI 없이 텍스트로 답하세요.",
 ].join(" ");
@@ -214,7 +216,7 @@ export class Orchestrator {
   private static readonly MAX_LOOP = 5;
 
   constructor(config: {
-    apiKey: string;
+    apiKey?: string;
     baseUrl: string;
     model: string;
     logger?: Logger;
@@ -228,6 +230,7 @@ export class Orchestrator {
       baseUrl: config.baseUrl,
       model: config.model,
       logger: config.logger,
+      authTokenProvider: config.getAccessToken,
     };
     this.logger = config.logger;
   }

@@ -1,15 +1,19 @@
-import type { LLMRequestMessage, LLMResponse, McpToolDefinition, ToolCall } from "../util/types/generalTypes";
+import type {
+  AccessTokenProvider,
+  LLMRequestMessage,
+  LLMResponse,
+  McpToolDefinition,
+  ToolCall,
+} from "../util/types/generalTypes";
 import type { A2UIBlock } from "../util/types/a2uiSchema";
 import type { Logger } from "../util/types/generalTypes";
 import { A2UIStreamParser, parseA2UI, type A2UIParseError } from "./parser";
 
-// TODO: 환경변수 또는 설정 파일에서 로드하도록 변경
-const LLM_MODEL = import.meta.env.VITE_LLM_MODEL;
-
 export interface LLMClientConfig {
   baseUrl: string;
   model: string;
-  apiKey: string;
+  apiKey?: string;
+  authTokenProvider?: AccessTokenProvider;
   logger?: Logger;
   // 재시도 파라미터
   maxRetries?: number;
@@ -97,6 +101,23 @@ function toOpenAITools(tools: McpToolDefinition[]) {
   }));
 }
 
+function buildRequestHeaders(config: LLMClientConfig, acceptStream = false): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  const bearerToken = config.apiKey || config.authTokenProvider?.();
+  if (bearerToken) {
+    headers.Authorization = `Bearer ${bearerToken}`;
+  }
+
+  if (acceptStream) {
+    headers.Accept = "text/event-stream";
+  }
+
+  return headers;
+}
+
 /**
  * OpenAI non-streaming 호출
  */
@@ -117,7 +138,7 @@ export async function callLLM(
   const initialBackoff = config.initialBackoffMs ?? DEFAULT_INITIAL_BACKOFF_MS;
 
   const body: Record<string, unknown> = {
-    model: LLM_MODEL,
+    model: config.model,
     messages,
   };
 
@@ -131,10 +152,7 @@ export async function callLLM(
     try {
       const res = await fetch(config.baseUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${config.apiKey}`,
-        },
+        headers: buildRequestHeaders(config),
         body: JSON.stringify(body),
       });
 
@@ -300,11 +318,7 @@ export async function callLLMStream(
   try {
     res = await fetch(config.baseUrl, {
       method: "POST",
-      headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${config.apiKey}`,
-          Accept: "text/event-stream",
-      },
+      headers: buildRequestHeaders(config, true),
       body: JSON.stringify(body),
       signal: options.signal,
     });

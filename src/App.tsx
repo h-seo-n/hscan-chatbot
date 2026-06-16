@@ -22,7 +22,7 @@ type InitStatus =
 /**
  * 앱 루트 컴포넌트
  *
- * TODO: API 키 입력 UI 또는 환경변수 연동 */
+ */
 function App() {
   const orchestratorRef = useRef<Orchestrator | null>(null);
   const [initStatus, setInitStatus] = useState<InitStatus>({ kind: "idle" });
@@ -48,22 +48,12 @@ function App() {
 
   // useEffect : Orchestrator 생성 & 초기화
   useEffect(() => {
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY ?? "";
     const baseUrl =
       import.meta.env.VITE_LLM_BASE_URL ??
-      "https://api.openai.com/v1/chat/completions";
-    const model = import.meta.env.VITE_LLM_MODEL ?? "gpt-5.4-mini";
-
-    if (!apiKey) {
-      setInitStatus({
-        kind: "error",
-        message: "API 키가 설정되지 않았습니다. VITE_OPENAI_API_KEY를 확인해주세요.",
-      });
-      return;
-    }
+      "http://127.0.0.1:3000/api/llm/chat/completions";
+    const model = import.meta.env.VITE_LLM_MODEL ?? "server-configured";
 
     const orchestrator = new Orchestrator({
-      apiKey,
       baseUrl,
       model,
       logger: orchestratorLogger,
