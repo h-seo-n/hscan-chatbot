@@ -1,5 +1,26 @@
 # React + TypeScript + Vite
 
+## LLM API key
+
+OpenAI API keys must stay in the backend environment, not in `hscan-chatbot/.env*`.
+
+Frontend:
+
+```env
+VITE_LLM_BASE_URL=http://127.0.0.1:3000/api/llm/chat/completions
+VITE_LLM_MODEL=server-configured
+```
+
+Backend:
+
+```env
+OPENAI_API_KEY=sk-...
+LLM_BASE_URL=https://api.openai.com/v1/chat/completions
+LLM_MODEL=gpt-5.4-mini
+```
+
+After this, remove `VITE_OPENAI_API_KEY` from `hscan-chatbot/.env.development` and `hscan-chatbot/.env.production`.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
